@@ -1,0 +1,35 @@
+{
+  "name": "marijan-projekt",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "PORT=4001 next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.0.1",
+    "iron-session": "^8.0.4",
+    "mariadb": "^3.4.1",
+    "next": "15.3.0",
+    "next-session": "^4.0.5",
+    "pg": "^8.15.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.11.14",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
