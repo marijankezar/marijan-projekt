@@ -49,87 +49,154 @@ export default function RegisterPage() {
   };
 
   return (
-  <div className="max-w-xl mx-auto mt-10 p-6 border rounded-xl shadow">
-      <h1 className="text-2xl font-bold mb-4">Neuen Account erstellen</h1>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-gray-900 to-gray-800 p-4">
+      <div className="w-full max-w-xl space-y-8 rounded-xl bg-gray-900/80 p-6 shadow-2xl shadow-indigo-500/20 sm:p-8">
+        <div className="text-center text-3xl font-bold text-white sm:text-4xl">
+          Neuen Account erstellen
+        </div>
 
+        {error && (
+          <p className="text-center text-base text-red-400 sm:text-lg">
+            {error}
+          </p>
+        )}
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
+            <input
+              name="username"
+              placeholder="Benutzername"
+              required
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <input
+              name="email"
+              type="email"
+              placeholder="E-Mail"
+              required
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
 
+          <div className="relative">
+            <input
+              name="passwort"
+              type="password"
+              placeholder="Passwort"
+              required
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
 
-        <input
-          name="username"
-          placeholder="Benutzername"
-          required
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="E-Mail"
-          required
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="passwort"
-          type="password"
-          placeholder="Passwort"
-          required
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="passwortWdh"
-          type="password"
-          placeholder="Passwort wiederholen"
-          required
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="vorname"
-          placeholder="Vorname"
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="nachname"
-          placeholder="Nachname"
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="adresse"
-          placeholder="Adresse"
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <input
-          name="geburtsdatum"
-          type="date"
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-        />
-        <select
-          name="geschlecht"
-          className="w-full p-2 border rounded"
-          onChange={handleChange}
-          value={formData.geschlecht}
+          <div className="relative">
+            <input
+              name="passwortWdh"
+              type="password"
+              placeholder="Passwort wiederholen"
+              required
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <div className="relative">
+            <input
+              name="vorname"
+              placeholder="Vorname"
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <div className="relative">
+            <input
+              name="nachname"
+              placeholder="Nachname"
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <div className="relative">
+            <input
+              name="adresse"
+              placeholder="Adresse"
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <div className="relative">
+            <input
+              name="geburtsdatum"
+              type="date"
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white placeholder-gray-400 focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+            />
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <div className="relative">
+            <select
+              name="geschlecht"
+              className="w-full border-b-2 border-gray-600 bg-transparent py-3 text-lg text-white focus:border-indigo-400 focus:outline-none sm:text-xl"
+              onChange={handleChange}
+              value={formData.geschlecht}
+            >
+              <option value="männlich" className="bg-gray-900 text-white">
+                Männlich
+              </option>
+              <option value="weiblich" className="bg-gray-900 text-white">
+                Weiblich
+              </option>
+              <option value="andere" className="bg-gray-900 text-white">
+                Andere
+              </option>
+            </select>
+            <div className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-indigo-400 transition-transform duration-300 focus-within:scale-x-100" />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full rounded-md bg-indigo-600 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-indigo-500 hover:scale-105 active:scale-95 sm:py-4 sm:text-xl"
+          >
+            REGISTRIEREN
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-gray-400 sm:text-base">
+          Bereits ein Konto?{' '}
+          <a
+            href="/login"
+            className="font-medium text-indigo-400 underline-offset-4 transition-colors duration-300 hover:underline hover:text-indigo-300"
+          >
+            Jetzt einloggen
+          </a>
+        </p>
+        <div className="text-center">
+        <a
+          href="https://kezar.at"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-gray-300 via-white to-gray-300 animate-text-shimmer font-semibold text-sm sm:text-base tracking-wide"
         >
-          <option value="männlich">Männlich</option>
-          <option value="weiblich">Weiblich</option>
-          <option value="andere">Andere</option>
-        </select>
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Registrieren
-        </button>
-      </form>
+          © {new Date().getFullYear()} Marijan Kežar BSc  www.kezar.at
+        </a>
+      </div>
+      </div>
     </div>
   );
 }

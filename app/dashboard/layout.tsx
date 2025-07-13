@@ -28,8 +28,8 @@ export default async function DashboardLayout({
         <form action="/api/logout" method="post">
           <button
             type="submit"
-            className="text-red-500 text-sm hover:underline"
-          >
+            className="w-40 rounded-md bg-indigo-600 px-4 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-indigo-500 hover:scale-105 active:scale-95 sm:px-6 sm:py-5 sm:text-lg"
+>
             Logout
           </button>
         </form>
@@ -39,3 +39,5 @@ export default async function DashboardLayout({
     </div>
   );
 }
+
+

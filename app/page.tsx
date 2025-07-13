@@ -21,8 +21,8 @@ export default function Home() {
         <Link href="/" className="hover:text-yellow-300 transition-colors">
           Start
         </Link>
-        <Link href="/stunden" className="hover:text-yellow-300 transition-colors">
-          Stundenbuchungen
+        <Link href="/login" className="hover:text-yellow-300 transition-colors">
+          Login
         </Link>
         {/* Weitere Links optional */}
       </div>
