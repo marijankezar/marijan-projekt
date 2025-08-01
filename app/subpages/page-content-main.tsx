@@ -120,7 +120,7 @@ interface TestProps {
 function test({ name, age }: TestProps) {
   return (
     <div className="text-center">
-      {name} {age ? `: ${age} Punkte abgegeben` : ""}
+      {name} {age ? `: ${age}Danke du gast Punkte abgegeben` : ""}
     </div>
   );
 }

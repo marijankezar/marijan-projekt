@@ -24,8 +24,14 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({ status: 'logged' });
-  } catch (err: any) {
-    console.error('Logging-Fehler:', err);
-    return new NextResponse(`Fehler beim automatischen Logging: ${err.message}`, { status: 500 });
+  } 
+  catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error('Logging-Fehler:', err);
+      return new NextResponse(`Fehler beim automatischen Logging: ${err.message}`, { status: 500 });
+    } else {
+      console.error('Unbekannter Fehler:', err);
+      return new NextResponse('Unbekannter Fehler beim Logging', { status: 500 });
+    }
   }
 }

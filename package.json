@@ -2,10 +2,11 @@
   "name": "marijan-projekt",
   "version": "0.1.0",
   "private": true,
+  "type": "module",          
   "scripts": {
-    "dev": "PORT=4001 next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "PORT=4004 next dev --turbopack",
+    "build": "next build --no-lint",
+    "start": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {
@@ -13,6 +14,7 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.0.1",
     "iron-session": "^8.0.4",
+    "lucide-react": "^0.525.0",
     "mariadb": "^3.4.1",
     "next": "15.3.0",
     "next-session": "^4.0.5",

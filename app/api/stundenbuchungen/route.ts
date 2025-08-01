@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM Stundenbuchungen ORDER BY id DESC');
+    const result = await pool.query('SELECT * FROM Stundenbuchungen ORDER BY id DESC LIMIT 100');
 
     const data = result.rows.map((row) => ({
       ...row,
