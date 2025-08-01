@@ -13,7 +13,7 @@ const MovieList: React.FC = () => {
 
   return (
     <div className="p-4 space-y-4">
-      <h2 className="text-2xl font-bold text-center mb-4">👪 Druzina</h2>
+      <h2 className="text-2xl font-bold text-center mb-4">👪 Družina Kežar</h2>
 
       {/* Auswahlfeld */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 px-4 py-4">
