@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import pool from "@/db";
 import { getSession } from "@/lib/session";
+import pool from "@/db";
 
 export async function GET() {
   const session = await getSession();

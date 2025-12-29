@@ -100,7 +100,7 @@ export default function MyMainContent() {
 
       {/* Übergabe der Variablen an die test-Funktion */}
       <div>
-        {test({ name, age })}
+        {/* {test({ name, age })} */}
       </div>
     
       
@@ -120,7 +120,7 @@ interface TestProps {
 function test({ name, age }: TestProps) {
   return (
     <div className="text-center">
-      {name} {age ? `: ${age}Danke du gast Punkte abgegeben` : ""}
+      {name} {age ? `: ${age}Danke du hast Punkte abgegeben` : ""}
     </div>
   );
 }

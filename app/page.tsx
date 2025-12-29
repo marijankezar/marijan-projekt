@@ -4,12 +4,16 @@ import MyMainContent from "./subpages/page-content-main";
 import MyFooter from "./components/footer";
 import LogClientVisit from "./components/LogClientVisit";
 import Link from "next/link";
+import DönerMenu from "./subpages/samy";
 
 export default function Home() {
   return (
     <div>
       <div>
         <MyHeder />
+      </div>
+      <div>
+        <DönerMenu />
       </div>
       <div>
         <MyMainContent />
@@ -21,3 +25,16 @@ export default function Home() {
     </div>
   );
 }
+
+
+// export default function Home() {
+//   return (
+//     <div>
+     
+//       <div>
+//         <DönerMenu />
+//       </div>
+    
+//     </div>
+//   );
+// }

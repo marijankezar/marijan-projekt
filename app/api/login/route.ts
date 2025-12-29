@@ -1,8 +1,8 @@
 // pages/api/login.ts
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
-import pool from '@/db';
 import bcrypt from 'bcryptjs';
+import pool from '@/db';
 
 const MAX_VERSUCHE = 3;
 const SPERRZEIT_MINUTEN = 5;

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/db';
+import { NextRequest, NextResponse } from 'next/server';
+
 
 export async function POST(req: NextRequest) {
   try {
