@@ -1,0 +1,245 @@
+.birthdayPage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  position: relative;
+}
+
+.confettiCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.birthdayContainer {
+  text-align: center;
+  z-index: 10;
+  max-width: 90vw;
+}
+
+.cakeContainer {
+  margin-bottom: 2rem;
+  animation: bounceIn 1s ease-out;
+}
+
+.cake {
+  font-size: clamp(4rem, 15vw, 8rem);
+  animation: bounce 2s ease infinite;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+}
+
+.title {
+  font-size: clamp(1.8rem, 6vw, 4rem);
+  font-weight: bold;
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #ff6b6b);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientText 3s ease infinite, fadeInUp 1s ease-out;
+}
+
+.name {
+  font-size: clamp(2.5rem, 10vw, 6rem);
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow:
+    0 0 10px #ffd700,
+    0 0 20px #ffd700,
+    0 0 30px #ff8c00,
+    0 0 40px #ff8c00,
+    0 0 50px #ff6600,
+    0 0 60px #ff6600;
+  animation: glow 2s ease-in-out infinite alternate, fadeInUp 1.2s ease-out;
+  margin-bottom: 2rem;
+  letter-spacing: 0.1em;
+}
+
+.decorations {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin: 1.5rem 0;
+  animation: fadeInUp 1.4s ease-out;
+}
+
+.balloon {
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+.balloon:nth-child(2) { animation-delay: 0.5s; }
+.balloon:nth-child(3) { animation-delay: 1s; }
+.balloon:nth-child(4) { animation-delay: 1.5s; }
+.balloon:nth-child(5) { animation-delay: 2s; }
+
+.message {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  color: #fff;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.8;
+  animation: fadeInUp 1.6s ease-out;
+  padding: 1.5rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.backLink {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+  animation: fadeInUp 1.8s ease-out;
+  margin-top: 1rem;
+}
+
+.backLink:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.partyPopper {
+  position: fixed;
+  font-size: 3rem;
+  z-index: 5;
+}
+
+.partyPopperLeft {
+  left: 5%;
+  top: 20%;
+  animation: popperShakeLeft 0.5s ease infinite;
+}
+
+.partyPopperRight {
+  right: 5%;
+  top: 20%;
+  transform: scaleX(-1);
+  animation: popperShakeRight 0.5s ease infinite;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientText {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow {
+  from {
+    text-shadow:
+      0 0 10px #ffd700,
+      0 0 20px #ffd700,
+      0 0 30px #ff8c00,
+      0 0 40px #ff8c00;
+  }
+  to {
+    text-shadow:
+      0 0 20px #ffd700,
+      0 0 30px #ffd700,
+      0 0 40px #ff8c00,
+      0 0 50px #ff8c00,
+      0 0 60px #ff6600,
+      0 0 70px #ff6600;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes popperShakeLeft {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+
+@keyframes popperShakeRight {
+  0%, 100% { transform: scaleX(-1) rotate(-10deg); }
+  50% { transform: scaleX(-1) rotate(10deg); }
+}
+
+@media (max-width: 600px) {
+  .message {
+    padding: 1rem;
+  }
+  .partyPopper {
+    font-size: 2rem;
+  }
+}

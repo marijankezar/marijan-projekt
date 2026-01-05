@@ -12,9 +12,9 @@ export default function Home() {
       <div>
         <MyHeder />
       </div>
-      <div>
+      {/* <div>
         <DönerMenu />
-      </div>
+      </div> */}
       <div>
         <MyMainContent />
       </div>

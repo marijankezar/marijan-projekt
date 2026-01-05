@@ -22,16 +22,15 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
             iframe.allow =
               'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
             iframe.allowFullscreen = true;
-            iframe.className = 'absolute top-0 left-0 w-full h-full border-none rounded-lg';
+            iframe.className = 'absolute top-0 left-0 w-full h-full border-none rounded-xl';
 
-            // Fallback, wenn das Video nicht geladen werden kann
             iframe.onerror = () => {
               container.innerHTML = `
-                <div class="absolute inset-0 flex items-center justify-center text-center bg-black text-white p-4">
+                <div class="absolute inset-0 flex items-center justify-center text-center bg-gray-900 text-white p-4">
                   <div>
-                    <p>🚫 Dieses Video kann nicht eingebettet werden.</p>
-                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer" class="underline text-blue-400 mt-2 inline-block">
-                      ➤ Auf YouTube ansehen
+                    <p class="text-gray-300">Video ni na voljo</p>
+                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer" class="underline text-cyan-400 mt-2 inline-block hover:text-cyan-300">
+                      Poglej na YouTube
                     </a>
                   </div>
                 </div>
@@ -52,19 +51,29 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
   }, [videoId]);
 
   return (
-    <div className="space-y-2 text-center">
-      <h2 className="text-xl font-medium text-gray-800">{videoDescr}</h2>
+    <div className="group">
       <div
-        className="video-container relative w-full pt-[56.25%] overflow-hidden bg-gray-900 rounded-lg shadow-md"
+        className="video-container relative w-full pt-[56.25%] overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-xl shadow-lg ring-1 ring-gray-300 dark:ring-white/10 transition-all duration-300 group-hover:ring-indigo-500/50 dark:group-hover:ring-purple-500/50 group-hover:shadow-indigo-500/20 dark:group-hover:shadow-purple-500/20"
         data-id={videoId}
       >
         <img
           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-          alt={`Vorschau für Video ID: ${videoId}`}
+          alt={`Video: ${videoDescr}`}
           loading="lazy"
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
       </div>
+      <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300 transition-colors">
+        {videoDescr}
+      </p>
     </div>
   );
 };

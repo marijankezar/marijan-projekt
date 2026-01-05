@@ -49,42 +49,42 @@ export default function StundenbuchungenList() {
 
   if (loading) {
     return (
-      <div className="flex justify-center bg-gradient-to-b from-black via-gray-900 to-gray-800 p-4 mt-8">
-        <p className="text-lg text-indigo-400 sm:text-xl">⏳ Lade Daten...</p>
+      <div className="flex justify-center bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300 dark:from-black dark:via-gray-900 dark:to-gray-800 p-4 mt-8">
+        <p className="text-lg text-indigo-600 dark:text-indigo-400 sm:text-xl">Lade Daten...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-b from-black via-gray-900 to-gray-800 p-4 mt-8">
-      <div className="w-full max-w-4xl mx-auto space-y-8 rounded-xl bg-gray-900/80 p-6 shadow-2xl shadow-indigo-500/20 sm:p-8">
+    <div className="bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300 dark:from-black dark:via-gray-900 dark:to-gray-800 p-4 mt-8">
+      <div className="w-full max-w-4xl mx-auto space-y-8 rounded-xl bg-white/90 dark:bg-gray-900/80 p-6 shadow-2xl shadow-indigo-500/20 sm:p-8">
         <div className="flex justify-between items-center">
-          <h2 className="text-center text-3xl font-bold text-white sm:text-4xl">
-            📋 Stundenbuchungen
+          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+            Stundenbuchungen
           </h2>
           <LogoutButton />
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-white sm:text-base">
-            <thead className="bg-gray-800/80">
-              <tr className="border-b-2 border-gray-600">
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">ID</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Person</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Baustelle-ID</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Datum</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Stunden</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Baustelle</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Text</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Int</th>
-                <th className="px-4 py-3 text-left font-medium text-indigo-400 sm:px-6">Double</th>
+          <table className="w-full text-sm text-gray-900 dark:text-white sm:text-base">
+            <thead className="bg-gray-200/80 dark:bg-gray-800/80">
+              <tr className="border-b-2 border-gray-300 dark:border-gray-600">
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">ID</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Person</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Baustelle-ID</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Datum</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Stunden</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Baustelle</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Text</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Int</th>
+                <th className="px-4 py-3 text-left font-medium text-indigo-600 dark:text-indigo-400 sm:px-6">Double</th>
               </tr>
             </thead>
             <tbody>
               {buchungen.map((b) => (
                 <tr
                   key={b.id}
-                  className="border-b border-gray-600/50 transition-all duration-300 hover:bg-gray-800/50"
+                  className="border-b border-gray-300/50 dark:border-gray-600/50 transition-all duration-300 hover:bg-gray-200/50 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-4 py-3 sm:px-6">{b.id}</td>
                   <td className="px-4 py-3 sm:px-6">{b.id_person ?? '-'}</td>
