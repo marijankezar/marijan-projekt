@@ -198,9 +198,10 @@ export default function BirthdayPage() {
           <div className={styles.cake}>🎂</div>
         </div>
 
-        <h1 className={styles.title}>Alles Gute zum Geburtstag</h1>
+       {/*  <h1 className={styles.title}>Alles Gute zum Geburtstag</h1> */}
+        <h1 className={styles.title}>Vse najboljše za rojstni dan!</h1>
 
-        <h2 className={styles.name}>SANDRO</h2>
+        <h2 className={styles.name}>Emanuel</h2>
 
         <div className={styles.decorations}>
           <span className={styles.balloon}>🎈</span>
@@ -211,9 +212,17 @@ export default function BirthdayPage() {
         </div>
 
         <div className={styles.message}>
-          🌟 Möge dieser besondere Tag voller Freude, Lachen und unvergesslicher Momente sein!
-          Lieber Sandro, 😊 – ich wünsche dir alles Liebe und Gute zum Geburtstag! 🎉 Du bist echt cool 😎, selbstständig 💪 und machst deine Ausbildung super – weiter so! 👏 Bleib auch weiterhin ein toller Bruder für deine liebe kleine Schwester Zoey ❤️.
-Lass dich heute feiern. Prost und liebe Grüße🌟
+          
+🌟 Dragi Emanuel! 🎉🎂
+
+Vse najboljše za rojstni dan!  
+Želim ti veliko zdravja, sreče in uspehov –  
+tako v življenju kot tudi v svetu IT-ja, kjer si pravi mojster. 💻😄  
+
+Naj ti nikoli ne zmanjka dobrih idej, stabilnih sistemov  
+in časa za vse, kar te veseli.  
+Uživaj svoj poseben dan! 🌟
+
         </div>
 
         <Link href="/" className={styles.backLink}>

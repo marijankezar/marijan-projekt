@@ -24,7 +24,7 @@ export default function MyHeder() {
               Login
             </Link>
             <Link href="/birthday" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              Sandro
+              Bithday
             </Link>
           </div>
 
