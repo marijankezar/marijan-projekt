@@ -109,6 +109,11 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('Login-Fehler:', error);
-    return NextResponse.json({ error: 'Login fehlgeschlagen' }, { status: 400 });
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+    return NextResponse.json({
+      error: 'Login fehlgeschlagen',
+      details: errorMessage,
+      hint: 'Möglicherweise ist die Datenbankverbindung nicht verfügbar'
+    }, { status: 500 });
   }
 }

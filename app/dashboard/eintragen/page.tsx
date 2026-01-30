@@ -196,6 +196,20 @@ export default function EintragenPage() {
       const failed = results.filter(r => !r.ok);
 
       if (failed.length > 0) {
+        // Versuche Details vom ersten fehlgeschlagenen Request zu bekommen
+        const firstFailed = results.find(r => !r.ok);
+        if (firstFailed) {
+          try {
+            const errorData = await firstFailed.json();
+            let errorText = errorData.error || 'Fehler beim Speichern';
+            if (errorData.details) {
+              errorText += `: ${errorData.details}`;
+            }
+            throw new Error(errorText);
+          } catch {
+            throw new Error(`${failed.length} von ${results.length} Einträgen fehlgeschlagen`);
+          }
+        }
         throw new Error(`${failed.length} von ${results.length} Einträgen fehlgeschlagen`);
       }
 

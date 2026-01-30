@@ -56,7 +56,11 @@ export default function StundenbuchungenList() {
       if (Array.isArray(data)) {
         setBuchungen(data);
       } else if (data.error) {
-        setError(data.error);
+        let errorText = data.error;
+        if (data.details) {
+          errorText += `: ${data.details}`;
+        }
+        setError(errorText);
         setBuchungen([]);
       } else {
         setError('Unerwartetes Datenformat');
@@ -195,7 +199,11 @@ export default function StundenbuchungenList() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Speichern');
+        let errorText = data.error || 'Fehler beim Speichern';
+        if (data.details) {
+          errorText += `: ${data.details}`;
+        }
+        throw new Error(errorText);
       }
 
       setEditingEntry(null);
@@ -215,7 +223,11 @@ export default function StundenbuchungenList() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Löschen');
+        let errorText = data.error || 'Fehler beim Löschen';
+        if (data.details) {
+          errorText += `: ${data.details}`;
+        }
+        throw new Error(errorText);
       }
 
       setDeleteConfirm(null);

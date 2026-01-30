@@ -28,10 +28,15 @@ export default function LoginPage() {
         router.push('/dashboard');
       } else {
         const data = await res.json();
-        setError(data.error || 'Login fehlgeschlagen');
+        let errorText = data.error || 'Login fehlgeschlagen';
+        if (data.details) {
+          errorText += ` (${data.details})`;
+        }
+        setError(errorText);
       }
     } catch (err) {
-      setError('Fehler beim Verbinden mit dem Server');
+      const errorMsg = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      setError(`Fehler beim Verbinden mit dem Server: ${errorMsg}`);
     }
   };
 

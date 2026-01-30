@@ -10,7 +10,11 @@ export async function GET() {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM Stundenbuchungen ORDER BY id DESC LIMIT 100');
+    // Nur Einträge des eingeloggten Users anzeigen
+    const result = await pool.query(
+      'SELECT * FROM Stundenbuchungen WHERE id_person = $1 ORDER BY id DESC LIMIT 100',
+      [session.user.id]
+    );
 
     const data = result.rows.map((row) => ({
       ...row,
@@ -21,7 +25,11 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Fehler beim Abrufen der Stundenbuchungen:', error);
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+    return NextResponse.json({
+      error: 'Fehler beim Laden der Stundenbuchungen',
+      details: errorMessage
+    }, { status: 500 });
   }
 }
 
@@ -63,7 +71,11 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Speichern der Stundenbuchung:', error);
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+    return NextResponse.json({
+      error: 'Fehler beim Speichern',
+      details: errorMessage
+    }, { status: 500 });
   }
 }
 
@@ -107,7 +119,11 @@ export async function PUT(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+    return NextResponse.json({
+      error: 'Fehler beim Aktualisieren',
+      details: errorMessage
+    }, { status: 500 });
   }
 }
 
@@ -139,6 +155,10 @@ export async function DELETE(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Löschen:', error);
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+    return NextResponse.json({
+      error: 'Fehler beim Löschen',
+      details: errorMessage
+    }, { status: 500 });
   }
 }
