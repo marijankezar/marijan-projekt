@@ -8,6 +8,21 @@ const protectedRoutes = ['/dashboard'];
 const SESSION_COOKIE_NAME = 'my_app_session';
 
 export async function middleware(request: NextRequest) {
+  // WICHTIG: Server Action Requests abfangen und sauber behandeln
+  // Diese können von gecachtem Browser-JavaScript kommen und den Server crashen
+  const nextAction = request.headers.get('Next-Action');
+  if (nextAction) {
+    console.log('Server Action Request abgefangen:', nextAction);
+    // Leere Antwort zurückgeben statt Server crashen zu lassen
+    return new NextResponse(
+      JSON.stringify({ error: 'Server Actions sind nicht verfügbar' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
   const { pathname } = request.nextUrl;
 
   // API-Routen und statische Dateien überspringen
