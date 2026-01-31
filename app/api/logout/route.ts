@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
+// Explizit Node.js Runtime verwenden
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   try {
     const session = await getSession();
