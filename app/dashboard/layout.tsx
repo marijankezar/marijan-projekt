@@ -5,6 +5,9 @@ import Link from "next/link";
 import { LayoutDashboard, PlusCircle, Clock, User } from "lucide-react";
 import LogoutButtonNew from "../components/LogoutButtonNew";
 
+// Verhindert Caching - Session wird bei jedem Request geprüft
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {
