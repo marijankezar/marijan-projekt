@@ -95,13 +95,21 @@ export async function POST(request: Request) {
       );
 
       // Session erstellen
-      const session = await getSession();
-      session.user = {
-        id: user.id,
-        username: user.username,
-        admin: user.admin === 1,
-      };
-      await session.save();
+      try {
+        const session = await getSession();
+        session.user = {
+          id: user.id,
+          username: user.username,
+          admin: user.admin === 1,
+        };
+        await session.save();
+      } catch (sessionError) {
+        console.error('Session-Fehler:', sessionError);
+        return NextResponse.json({
+          error: 'Session konnte nicht erstellt werden',
+          details: sessionError instanceof Error ? sessionError.message : 'Unbekannter Fehler'
+        }, { status: 500 });
+      }
 
       return NextResponse.json({ success: true });
     } finally {
