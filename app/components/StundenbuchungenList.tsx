@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Search, Calendar, Building2, Clock, RefreshCw, AlertCircle,
   Download, Trash2, Edit3, X, Check, ChevronDown, ChevronUp,
@@ -40,7 +39,6 @@ export default function StundenbuchungenList() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [showStats, setShowStats] = useState(true);
   const [groupByWeek, setGroupByWeek] = useState(false);
-  const router = useRouter();
 
   const fetchBuchungen = async () => {
     setLoading(true);
@@ -48,7 +46,7 @@ export default function StundenbuchungenList() {
     try {
       const res = await fetch('/api/stundenbuchungen');
       if (res.status === 401) {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
       const data = await res.json();

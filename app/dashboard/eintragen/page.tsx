@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Save, Calendar, Clock, Building2, FileText, CheckCircle, AlertCircle,
   Plus, ArrowLeft, Copy, CalendarRange, Repeat, Star, History
@@ -21,7 +20,6 @@ interface LetzterEintrag {
 }
 
 export default function EintragenPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -226,7 +224,7 @@ export default function EintragenPage() {
       setMultiTagModus(false);
 
       setTimeout(() => {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }, 2000);
 
     } catch (err: unknown) {
