@@ -103,9 +103,9 @@ export async function POST(request: NextRequest) {
       id: user.id,
       username: user.username,
       email: user.email,
-      vorname: user.vorname,
-      nachname: user.nachname,
-      admin: user.admin
+      vorname: user.vorname || undefined,
+      nachname: user.nachname || undefined,
+      admin: !!user.admin
     };
     await session.save();
 

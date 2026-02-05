@@ -7,6 +7,9 @@ export interface UserSession {
   id: number;
   username: string;
   admin: boolean;
+  email?: string;
+  vorname?: string;
+  nachname?: string;
 }
 
 export const sessionOptions = {
