@@ -26,6 +26,12 @@ export default function MyHeder() {
             <Link href="/birthday" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Bithday
             </Link>
+            <Link href="/songs" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              Pesmi
+            </Link>
+            <Link href="/timebook" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              TimeBook
+            </Link>
           </div>
 
           {/* Mitte: Kezar-Zentrierung */}

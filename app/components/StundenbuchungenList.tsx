@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import {
   Search, Calendar, Building2, Clock, RefreshCw, AlertCircle,
   Download, Trash2, Edit3, X, Check, ChevronDown, ChevronUp,
-  TrendingUp, CalendarDays
+  TrendingUp, CalendarDays, Plus
 } from 'lucide-react';
+import ZeiterfassungForm, { ZeiterfassungData } from './ZeiterfassungForm';
 
 export interface Stundenbuchung {
   id: number;
@@ -24,6 +25,8 @@ interface EditingEntry {
   id: number;
   datum: string;
   stunden: string;
+  zeit_von: string;
+  zeit_bis: string;
   baustelle: string;
   bemerkung: string;
 }
@@ -39,6 +42,7 @@ export default function StundenbuchungenList() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [showStats, setShowStats] = useState(true);
   const [groupByWeek, setGroupByWeek] = useState(false);
+  const [showNewEntryForm, setShowNewEntryForm] = useState(false);
 
   const fetchBuchungen = async () => {
     setLoading(true);
@@ -173,12 +177,27 @@ export default function StundenbuchungenList() {
     link.click();
   };
 
+  // Hilfsfunktion: Stunden aus Zeitbereich berechnen
+  const calculateHoursFromTime = (zeitVon: string, zeitBis: string): string => {
+    if (!zeitVon || !zeitBis) return '';
+    const [vonH, vonM] = zeitVon.split(':').map(Number);
+    const [bisH, bisM] = zeitBis.split(':').map(Number);
+    const vonMinutes = vonH * 60 + vonM;
+    const bisMinutes = bisH * 60 + bisM;
+    const diffMinutes = bisMinutes - vonMinutes;
+    if (diffMinutes <= 0) return '';
+    const hours = diffMinutes / 60;
+    return hours.toFixed(2);
+  };
+
   // Eintrag bearbeiten
   const startEdit = (b: Stundenbuchung) => {
     setEditingEntry({
       id: b.id,
       datum: b.datum.split('T')[0],
       stunden: b.stunden?.toString() || '',
+      zeit_von: '',
+      zeit_bis: '',
       baustelle: b.baustelle || '',
       bemerkung: b.platzhalter_text || ''
     });
@@ -210,6 +229,23 @@ export default function StundenbuchungenList() {
       console.error('Fehler:', err);
       setError(err instanceof Error ? err.message : 'Fehler beim Speichern');
     }
+  };
+
+  // Neuen Eintrag speichern (über ZeiterfassungForm)
+  const saveNewEntry = async (data: ZeiterfassungData) => {
+    const res = await fetch('/api/stundenbuchungen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Fehler beim Speichern');
+    }
+
+    setShowNewEntryForm(false);
+    fetchBuchungen();
   };
 
   // Eintrag löschen
@@ -266,6 +302,26 @@ export default function StundenbuchungenList() {
 
   return (
     <div className="space-y-4">
+      {/* Neue Zeiterfassung Button & Formular */}
+      {showNewEntryForm ? (
+        <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700/50">
+          <ZeiterfassungForm
+            onSave={saveNewEntry}
+            onCancel={() => setShowNewEntryForm(false)}
+            maxDauerStunden={16}
+            erlaubeZukunft={false}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowNewEntryForm(true)}
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl shadow-lg shadow-indigo-500/25 transition-all font-medium"
+        >
+          <Plus className="w-5 h-5" />
+          Neue Zeiterfassung
+        </button>
+      )}
+
       {/* Statistik-Karten */}
       {showStats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -456,22 +512,65 @@ export default function StundenbuchungenList() {
                 className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
               <input
-                type="number"
-                value={editingEntry.stunden}
-                onChange={(e) => setEditingEntry({ ...editingEntry, stunden: e.target.value })}
-                step="0.5"
-                min="0"
-                max="24"
-                placeholder="Stunden"
-                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <input
                 type="text"
                 value={editingEntry.baustelle}
                 onChange={(e) => setEditingEntry({ ...editingEntry, baustelle: e.target.value })}
                 placeholder="Baustelle"
-                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white sm:col-span-2"
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white sm:col-span-3"
               />
+            </div>
+            {/* Zeit von/bis Zeile */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Zeit von:</label>
+                <input
+                  type="time"
+                  value={editingEntry.zeit_von}
+                  onChange={(e) => {
+                    const newZeitVon = e.target.value;
+                    const calculatedHours = calculateHoursFromTime(newZeitVon, editingEntry.zeit_bis);
+                    setEditingEntry({
+                      ...editingEntry,
+                      zeit_von: newZeitVon,
+                      stunden: calculatedHours || editingEntry.stunden
+                    });
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Zeit bis:</label>
+                <input
+                  type="time"
+                  value={editingEntry.zeit_bis}
+                  onChange={(e) => {
+                    const newZeitBis = e.target.value;
+                    const calculatedHours = calculateHoursFromTime(editingEntry.zeit_von, newZeitBis);
+                    setEditingEntry({
+                      ...editingEntry,
+                      zeit_bis: newZeitBis,
+                      stunden: calculatedHours || editingEntry.stunden
+                    });
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="flex items-center gap-2 sm:col-span-2">
+                <label className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stunden:</label>
+                <input
+                  type="number"
+                  value={editingEntry.stunden}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, stunden: e.target.value })}
+                  step="0.25"
+                  min="0"
+                  max="24"
+                  placeholder="Stunden"
+                  className="w-24 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+                <span className="text-sm text-gray-400 dark:text-gray-500">
+                  {editingEntry.zeit_von && editingEntry.zeit_bis ? '(berechnet)' : '(manuell)'}
+                </span>
+              </div>
             </div>
             <input
               type="text"

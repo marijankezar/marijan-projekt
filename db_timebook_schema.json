@@ -1,0 +1,736 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DB_TimeBook - Mitarbeiter-Zeiterfassungs-Datenbank",
+  "description": "Vollständige Datenbankstruktur für Zeiterfassung, Kundenverwaltung und Rechnungsstellung",
+  "version": "1.0.0",
+  "database": {
+    "name": "db_timebook",
+    "host": "192.168.178.25",
+    "port": 5432,
+    "encoding": "UTF8",
+    "extensions": ["uuid-ossp", "pgcrypto"]
+  },
+  "security": {
+    "password_hashing": {
+      "algorithm": "bcrypt",
+      "postgres_function": "crypt(password, gen_salt('bf'))",
+      "nextjs_library": "bcryptjs",
+      "salt_rounds": 12
+    },
+    "sql_injection_protection": {
+      "method": "parameterized_queries",
+      "description": "Alle Queries müssen parametrisiert sein - NIEMALS String-Konkatenation verwenden",
+      "example_safe": "pool.query('SELECT * FROM users WHERE id = $1', [userId])",
+      "example_unsafe": "pool.query(`SELECT * FROM users WHERE id = ${userId}`)"
+    },
+    "session_management": {
+      "library": "iron-session",
+      "cookie_encryption": true,
+      "session_secret_env": "SESSION_SECRET"
+    },
+    "login_protection": {
+      "max_attempts": 3,
+      "lockout_duration_minutes": 5,
+      "track_ip_address": true,
+      "track_user_agent": true
+    },
+    "row_level_security": {
+      "enabled": true,
+      "isolation": "Mitarbeiter sehen nur eigene Daten",
+      "admin_override": true
+    }
+  },
+  "tables": {
+    "personlogin": {
+      "description": "Haupttabelle für Mitarbeiter/Benutzer mit Login-Daten und Sperrmechanismus",
+      "primary_key": "id",
+      "columns": {
+        "id": {
+          "type": "SERIAL",
+          "nullable": false,
+          "description": "Eindeutige Mitarbeiter-ID"
+        },
+        "username": {
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "unique": true,
+          "indexed": true,
+          "validation": {
+            "min_length": 3,
+            "max_length": 100,
+            "pattern": "^[a-zA-Z0-9._-]+$",
+            "error_message": "Benutzername darf nur Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche enthalten"
+          }
+        },
+        "hashed_passwort": {
+          "type": "TEXT",
+          "nullable": false,
+          "description": "bcrypt-gehashtes Passwort - NIEMALS Klartext speichern!",
+          "validation": {
+            "min_length_plain": 8,
+            "require_uppercase": true,
+            "require_lowercase": true,
+            "require_number": true,
+            "error_message": "Passwort muss mindestens 8 Zeichen mit Groß-, Kleinbuchstaben und Zahl enthalten"
+          }
+        },
+        "email": {
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "unique": true,
+          "indexed": true,
+          "validation": {
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "error_message": "Bitte eine gültige E-Mail-Adresse eingeben"
+          }
+        },
+        "vorname": {
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "validation": {
+            "max_length": 50
+          }
+        },
+        "nachname": {
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "validation": {
+            "max_length": 50
+          }
+        },
+        "adresse": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "geburtsdatum": {
+          "type": "DATE",
+          "nullable": true,
+          "validation": {
+            "max_date": "today",
+            "error_message": "Geburtsdatum darf nicht in der Zukunft liegen"
+          }
+        },
+        "geschlecht": {
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "check": "geschlecht IN ('männlich', 'weiblich', 'divers', 'm', 'w', 'd')",
+          "enum_values": ["männlich", "weiblich", "divers", "m", "w", "d"]
+        },
+        "admin": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0,
+          "description": "0 = normaler Benutzer, 1 = Administrator"
+        },
+        "login_versuche": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0,
+          "description": "Anzahl fehlgeschlagener Login-Versuche"
+        },
+        "letzte_login_sperre": {
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "description": "Zeitpunkt der letzten Sperre nach 3 Fehlversuchen"
+        },
+        "aktiv": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": true,
+          "indexed": true
+        },
+        "telefon": {
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        "position": {
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "description": "Berufsbezeichnung/Position im Unternehmen"
+        },
+        "notizen": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "erstellt_am": {
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "aktualisiert_am": {
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP",
+          "auto_update": true
+        },
+        "reserve1": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve2": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve3": { "type": "TEXT", "nullable": true }
+      },
+      "indexes": [
+        { "name": "idx_personlogin_username", "columns": ["username"] },
+        { "name": "idx_personlogin_email", "columns": ["email"] },
+        { "name": "idx_personlogin_aktiv", "columns": ["aktiv"] }
+      ],
+      "triggers": [
+        {
+          "name": "trigger_personlogin_updated",
+          "event": "BEFORE UPDATE",
+          "function": "update_aktualisiert_am()"
+        }
+      ]
+    },
+    "login_versuche_historie": {
+      "description": "Protokolliert alle Login-Versuche für Sicherheit und Audit",
+      "primary_key": "id",
+      "columns": {
+        "id": { "type": "SERIAL", "nullable": false },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "versuch_zeitpunkt": {
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "erfolgreich": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        "ip_adresse": {
+          "type": "INET",
+          "nullable": true
+        },
+        "user_agent": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "fehlermeldung": {
+          "type": "VARCHAR(255)",
+          "nullable": true
+        }
+      },
+      "indexes": [
+        { "name": "idx_login_versuche_mitarbeiter", "columns": ["mitarbeiter_id"] },
+        { "name": "idx_login_versuche_zeitpunkt", "columns": ["versuch_zeitpunkt"], "order": "DESC" }
+      ]
+    },
+    "kunden": {
+      "description": "Kundenstammdaten - jeder Mitarbeiter sieht nur seine eigenen Kunden (RLS)",
+      "primary_key": "id",
+      "row_level_security": true,
+      "columns": {
+        "id": {
+          "type": "UUID",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "kundennummer": {
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "unique": true,
+          "indexed": true,
+          "auto_generate": "KD-{sequence:6}",
+          "description": "Automatisch generiert: KD-000001"
+        },
+        "firmenname": { "type": "VARCHAR(255)", "nullable": true },
+        "ansprechperson_vorname": { "type": "VARCHAR(100)", "nullable": true },
+        "ansprechperson_nachname": { "type": "VARCHAR(100)", "nullable": true },
+        "geschlecht": {
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "check": "geschlecht IN ('männlich', 'weiblich', 'divers', 'm', 'w', 'd')"
+        },
+        "strasse": { "type": "VARCHAR(255)", "nullable": true },
+        "hausnummer": { "type": "VARCHAR(20)", "nullable": true },
+        "plz": { "type": "VARCHAR(10)", "nullable": true },
+        "ort": { "type": "VARCHAR(100)", "nullable": true },
+        "land": { "type": "VARCHAR(100)", "nullable": true, "default": "'Österreich'" },
+        "telefon": { "type": "VARCHAR(50)", "nullable": true },
+        "mobil": { "type": "VARCHAR(50)", "nullable": true },
+        "email": {
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "validation": { "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" }
+        },
+        "website": { "type": "VARCHAR(255)", "nullable": true },
+        "uid_nummer": { "type": "VARCHAR(50)", "nullable": true },
+        "steuernummer": { "type": "VARCHAR(50)", "nullable": true },
+        "zahlungsziel_tage": { "type": "INTEGER", "nullable": false, "default": 30 },
+        "aktiv": { "type": "BOOLEAN", "nullable": false, "default": true, "indexed": true },
+        "notizen": { "type": "TEXT", "nullable": true },
+        "interne_notizen": { "type": "TEXT", "nullable": true },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" },
+        "aktualisiert_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP", "auto_update": true },
+        "reserve1": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve2": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve3": { "type": "TEXT", "nullable": true }
+      },
+      "triggers": [
+        { "name": "trigger_kunden_kundennummer", "event": "BEFORE INSERT", "function": "generate_kundennummer()" },
+        { "name": "trigger_kunden_updated", "event": "BEFORE UPDATE", "function": "update_aktualisiert_am()" }
+      ]
+    },
+    "dienstleistungskategorien": {
+      "description": "Kategorien für Dienstleistungen mit Standard-Stundensatz",
+      "primary_key": "id",
+      "columns": {
+        "id": { "type": "SERIAL", "nullable": false },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "bezeichnung": {
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "validation": { "min_length": 1, "max_length": 100 }
+        },
+        "beschreibung": { "type": "TEXT", "nullable": true },
+        "standard_stundensatz": {
+          "type": "DECIMAL(10,2)",
+          "nullable": true,
+          "validation": { "min": 0 }
+        },
+        "farbe": {
+          "type": "VARCHAR(7)",
+          "nullable": true,
+          "description": "Hex-Farbcode für UI, z.B. #FF5733",
+          "validation": { "pattern": "^#[0-9A-Fa-f]{6}$" }
+        },
+        "aktiv": { "type": "BOOLEAN", "default": true },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" }
+      }
+    },
+    "dienstleistungen": {
+      "description": "Zeiterfassung und Dienstleistungen mit automatischer Stundenberechnung",
+      "primary_key": "id",
+      "row_level_security": true,
+      "columns": {
+        "id": { "type": "UUID", "nullable": false, "default": "uuid_generate_v4()" },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "kunde_id": {
+          "type": "UUID",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "kunden", "column": "id", "on_delete": "CASCADE" }
+        },
+        "kategorie_id": {
+          "type": "INTEGER",
+          "nullable": true,
+          "indexed": true,
+          "references": { "table": "dienstleistungskategorien", "column": "id", "on_delete": "SET NULL" }
+        },
+        "start_datum": {
+          "type": "DATE",
+          "nullable": false,
+          "validation": {
+            "required": true,
+            "error_message": "Bitte Datum angeben."
+          }
+        },
+        "start_zeit": {
+          "type": "TIME",
+          "nullable": false,
+          "validation": {
+            "required": true,
+            "format": "HH:MM",
+            "error_message": "Bitte Startzeit im Format HH:MM eingeben (z. B. 08:00)."
+          }
+        },
+        "ende_datum": {
+          "type": "DATE",
+          "nullable": true
+        },
+        "ende_zeit": {
+          "type": "TIME",
+          "nullable": true,
+          "validation": {
+            "format": "HH:MM",
+            "error_message": "Bitte Endzeit im Format HH:MM eingeben (z. B. 17:30)."
+          }
+        },
+        "start_timestamp": {
+          "type": "TIMESTAMP",
+          "generated": "ALWAYS AS (start_datum + start_zeit) STORED",
+          "description": "Automatisch berechnet"
+        },
+        "ende_timestamp": {
+          "type": "TIMESTAMP",
+          "generated": "ALWAYS AS (ende_datum + ende_zeit) STORED",
+          "description": "Automatisch berechnet"
+        },
+        "dauer_minuten": {
+          "type": "INTEGER",
+          "generated": "ALWAYS AS (CASE WHEN ende_datum IS NOT NULL AND ende_zeit IS NOT NULL THEN EXTRACT(EPOCH FROM ((ende_datum + ende_zeit) - (start_datum + start_zeit)))::INTEGER / 60 ELSE NULL END) STORED",
+          "description": "Automatisch berechnet aus Start- und Endzeit",
+          "validation": {
+            "min": 1,
+            "max": 960,
+            "max_description": "16 Stunden = 960 Minuten",
+            "error_messages": {
+              "zero": "Die Dauer darf nicht 0 sein.",
+              "negative": "Die Startzeit darf nicht nach der Endzeit liegen.",
+              "exceeds_max": "Die erfasste Dauer überschreitet den erlaubten Maximalwert (16 Stunden)."
+            }
+          }
+        },
+        "dauer_stunden": {
+          "type": "DECIMAL(10,2)",
+          "generated": "ALWAYS AS (CASE WHEN ende_datum IS NOT NULL AND ende_zeit IS NOT NULL THEN ROUND(EXTRACT(EPOCH FROM ((ende_datum + ende_zeit) - (start_datum + start_zeit)))::NUMERIC / 3600, 2) ELSE NULL END) STORED",
+          "description": "Automatisch berechnet in Stunden mit 2 Dezimalstellen"
+        },
+        "titel": { "type": "VARCHAR(255)", "nullable": true },
+        "beschreibung": { "type": "TEXT", "nullable": false },
+        "stundensatz": { "type": "DECIMAL(10,2)", "nullable": true },
+        "pauschale": { "type": "DECIMAL(10,2)", "nullable": true },
+        "gesamtbetrag": { "type": "DECIMAL(10,2)", "nullable": true },
+        "abgeschlossen": { "type": "BOOLEAN", "default": false },
+        "abgerechnet": { "type": "BOOLEAN", "default": false, "indexed": true },
+        "abgerechnet_am": { "type": "TIMESTAMP", "nullable": true },
+        "fakturiert": { "type": "BOOLEAN", "default": false },
+        "interne_notizen": { "type": "TEXT", "nullable": true },
+        "notizen": { "type": "TEXT", "nullable": true },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" },
+        "aktualisiert_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP", "auto_update": true },
+        "reserve1": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve2": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve3": { "type": "TEXT", "nullable": true }
+      },
+      "constraints": [
+        {
+          "name": "check_ende_nach_start",
+          "type": "CHECK",
+          "condition": "ende_datum IS NULL OR ende_zeit IS NULL OR (ende_datum + ende_zeit) > (start_datum + start_zeit)",
+          "error_message": "Die Startzeit darf nicht nach der Endzeit liegen."
+        }
+      ],
+      "indexes": [
+        { "name": "idx_dienstleistungen_mitarbeiter", "columns": ["mitarbeiter_id"] },
+        { "name": "idx_dienstleistungen_kunde", "columns": ["kunde_id"] },
+        { "name": "idx_dienstleistungen_datum", "columns": ["start_datum"], "order": "DESC" },
+        { "name": "idx_dienstleistungen_abgerechnet", "columns": ["abgerechnet"] },
+        { "name": "idx_dienstleistungen_kategorie", "columns": ["kategorie_id"] }
+      ]
+    },
+    "honorarnoten": {
+      "description": "Rechnungen/Honorarnoten mit automatischer Betragsberechnung",
+      "primary_key": "id",
+      "row_level_security": true,
+      "columns": {
+        "id": { "type": "UUID", "nullable": false, "default": "uuid_generate_v4()" },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "kunde_id": {
+          "type": "UUID",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "kunden", "column": "id", "on_delete": "CASCADE" }
+        },
+        "rechnungsnummer": {
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "unique": true,
+          "indexed": true,
+          "auto_generate": "{YYYY}-{sequence:5}",
+          "description": "Automatisch generiert: 2026-00001"
+        },
+        "rechnungsdatum": { "type": "DATE", "nullable": false, "default": "CURRENT_DATE" },
+        "leistungsdatum_von": { "type": "DATE", "nullable": true },
+        "leistungsdatum_bis": { "type": "DATE", "nullable": true },
+        "faelligkeitsdatum": { "type": "DATE", "nullable": true },
+        "nettobetrag": { "type": "DECIMAL(10,2)", "nullable": false, "default": 0 },
+        "steuersatz": { "type": "DECIMAL(5,2)", "nullable": false, "default": 20.00 },
+        "steuerbetrag": {
+          "type": "DECIMAL(10,2)",
+          "generated": "ALWAYS AS (ROUND(nettobetrag * steuersatz / 100, 2)) STORED"
+        },
+        "bruttobetrag": {
+          "type": "DECIMAL(10,2)",
+          "generated": "ALWAYS AS (ROUND(nettobetrag + (nettobetrag * steuersatz / 100), 2)) STORED"
+        },
+        "bezahlt": { "type": "BOOLEAN", "default": false, "indexed": true },
+        "bezahlt_am": { "type": "DATE", "nullable": true },
+        "zahlungsmethode": { "type": "VARCHAR(50)", "nullable": true },
+        "storniert": { "type": "BOOLEAN", "default": false },
+        "storniert_am": { "type": "TIMESTAMP", "nullable": true },
+        "storno_grund": { "type": "TEXT", "nullable": true },
+        "notizen": { "type": "TEXT", "nullable": true },
+        "interne_notizen": { "type": "TEXT", "nullable": true },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" },
+        "aktualisiert_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP", "auto_update": true },
+        "reserve1": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve2": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve3": { "type": "TEXT", "nullable": true }
+      },
+      "triggers": [
+        { "name": "trigger_honorarnoten_rechnungsnummer", "event": "BEFORE INSERT", "function": "generate_rechnungsnummer()" }
+      ]
+    },
+    "honorarnoten_positionen": {
+      "description": "Einzelpositionen einer Rechnung",
+      "primary_key": "id",
+      "columns": {
+        "id": { "type": "UUID", "nullable": false, "default": "uuid_generate_v4()" },
+        "honorarnote_id": {
+          "type": "UUID",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "honorarnoten", "column": "id", "on_delete": "CASCADE" }
+        },
+        "dienstleistung_id": {
+          "type": "UUID",
+          "nullable": true,
+          "indexed": true,
+          "references": { "table": "dienstleistungen", "column": "id", "on_delete": "SET NULL" }
+        },
+        "position_nr": { "type": "INTEGER", "nullable": false },
+        "beschreibung": { "type": "TEXT", "nullable": false },
+        "menge": { "type": "DECIMAL(10,3)", "nullable": false, "default": 1 },
+        "einheit": { "type": "VARCHAR(50)", "nullable": false, "default": "'Stunden'" },
+        "einzelpreis": { "type": "DECIMAL(10,2)", "nullable": false },
+        "gesamtpreis": {
+          "type": "DECIMAL(10,2)",
+          "generated": "ALWAYS AS (ROUND(menge * einzelpreis, 2)) STORED"
+        },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" },
+        "reserve1": { "type": "VARCHAR(255)", "nullable": true },
+        "reserve2": { "type": "VARCHAR(255)", "nullable": true }
+      },
+      "constraints": [
+        { "name": "unique_position_nr", "type": "UNIQUE", "columns": ["honorarnote_id", "position_nr"] }
+      ]
+    },
+    "stundenzettel": {
+      "description": "Monatliche Stundenübersichten pro Mitarbeiter",
+      "primary_key": "id",
+      "columns": {
+        "id": { "type": "UUID", "nullable": false, "default": "uuid_generate_v4()" },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "CASCADE" }
+        },
+        "jahr": { "type": "INTEGER", "nullable": false },
+        "monat": {
+          "type": "INTEGER",
+          "nullable": false,
+          "check": "monat BETWEEN 1 AND 12"
+        },
+        "soll_stunden": { "type": "DECIMAL(10,2)", "default": 0 },
+        "ist_stunden": { "type": "DECIMAL(10,2)", "default": 0 },
+        "ueberstunden": {
+          "type": "DECIMAL(10,2)",
+          "generated": "ALWAYS AS (ist_stunden - soll_stunden) STORED"
+        },
+        "freigegeben": { "type": "BOOLEAN", "default": false },
+        "freigegeben_am": { "type": "TIMESTAMP", "nullable": true },
+        "freigegeben_von": {
+          "type": "INTEGER",
+          "nullable": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "SET NULL" }
+        },
+        "notizen": { "type": "TEXT", "nullable": true },
+        "erstellt_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP" },
+        "aktualisiert_am": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP", "auto_update": true }
+      },
+      "constraints": [
+        { "name": "unique_mitarbeiter_monat", "type": "UNIQUE", "columns": ["mitarbeiter_id", "jahr", "monat"] }
+      ],
+      "indexes": [
+        { "name": "idx_stundenzettel_jahr_monat", "columns": ["jahr", "monat"] }
+      ]
+    },
+    "audit_log": {
+      "description": "Änderungsprotokoll für alle wichtigen Tabellen",
+      "primary_key": "id",
+      "columns": {
+        "id": { "type": "BIGSERIAL", "nullable": false },
+        "tabelle": { "type": "VARCHAR(100)", "nullable": false, "indexed": true },
+        "datensatz_id": { "type": "VARCHAR(100)", "nullable": false },
+        "aktion": {
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "check": "aktion IN ('INSERT', 'UPDATE', 'DELETE')"
+        },
+        "mitarbeiter_id": {
+          "type": "INTEGER",
+          "nullable": true,
+          "indexed": true,
+          "references": { "table": "personlogin", "column": "id", "on_delete": "SET NULL" }
+        },
+        "alte_daten": { "type": "JSONB", "nullable": true },
+        "neue_daten": { "type": "JSONB", "nullable": true },
+        "zeitstempel": { "type": "TIMESTAMP", "default": "CURRENT_TIMESTAMP", "indexed": true },
+        "ip_adresse": { "type": "INET", "nullable": true }
+      }
+    }
+  },
+  "views": {
+    "v_stunden_monatlich": {
+      "description": "Stunden pro Mitarbeiter pro Monat",
+      "columns": ["mitarbeiter_id", "username", "vorname", "nachname", "jahr", "monat", "jahr_monat", "anzahl_eintraege", "stunden_gesamt", "stunden_gerundet", "umsatz_gesamt"]
+    },
+    "v_stunden_taeglich": {
+      "description": "Stunden pro Mitarbeiter pro Tag",
+      "columns": ["mitarbeiter_id", "username", "vorname", "nachname", "datum", "wochentag", "anzahl_eintraege", "stunden_gesamt", "stunden_gerundet"]
+    },
+    "v_kunden_uebersicht": {
+      "description": "Übersicht Kunden pro Mitarbeiter",
+      "columns": ["mitarbeiter_id", "username", "mitarbeiter_name", "anzahl_kunden", "anzahl_kunden_aktiv", "anzahl_dienstleistungen", "gesamtstunden", "gesamtumsatz"]
+    },
+    "v_offene_rechnungen": {
+      "description": "Alle offenen (unbezahlten) Rechnungen",
+      "columns": ["id", "rechnungsnummer", "rechnungsdatum", "faelligkeitsdatum", "tage_ueberfaellig", "bruttobetrag", "mitarbeiter_id", "mitarbeiter_name", "firmenname", "kunde_name", "kunde_email"]
+    },
+    "v_laufende_dienstleistungen": {
+      "description": "Aktuell laufende (nicht beendete) Zeiterfassungen",
+      "columns": ["id", "start_datum", "start_zeit", "titel", "beschreibung", "mitarbeiter_id", "mitarbeiter_name", "kunde", "stunden_seit_start"]
+    }
+  },
+  "functions": {
+    "update_aktualisiert_am": {
+      "description": "Setzt aktualisiert_am automatisch bei UPDATE",
+      "trigger": true
+    },
+    "pruefe_login_sperre": {
+      "description": "Prüft ob ein Benutzer gesperrt ist",
+      "parameters": ["p_mitarbeiter_id INTEGER"],
+      "returns": "TABLE(gesperrt BOOLEAN, verbleibende_sekunden INTEGER, fehlversuche INTEGER)"
+    },
+    "registriere_login_versuch": {
+      "description": "Registriert einen Login-Versuch (erfolgreich oder nicht)",
+      "parameters": ["p_mitarbeiter_id INTEGER", "p_erfolgreich BOOLEAN", "p_ip_adresse INET", "p_user_agent TEXT"]
+    },
+    "generate_kundennummer": {
+      "description": "Generiert automatisch eine Kundennummer",
+      "trigger": true,
+      "format": "KD-{6-stellige Sequenz}"
+    },
+    "generate_rechnungsnummer": {
+      "description": "Generiert automatisch eine Rechnungsnummer",
+      "trigger": true,
+      "format": "{Jahr}-{5-stellige Sequenz}"
+    }
+  },
+  "nextjs_integration": {
+    "typescript_interfaces": {
+      "location": "src/types/db-timebook.ts",
+      "generate": true
+    },
+    "api_routes": {
+      "base_path": "/api/timebook",
+      "routes": [
+        { "path": "/auth/login", "methods": ["POST"], "description": "Login mit Rate-Limiting" },
+        { "path": "/auth/logout", "methods": ["POST"], "description": "Logout" },
+        { "path": "/kunden", "methods": ["GET", "POST"], "description": "Kunden auflisten/erstellen" },
+        { "path": "/kunden/[id]", "methods": ["GET", "PUT", "DELETE"], "description": "Einzelner Kunde" },
+        { "path": "/dienstleistungen", "methods": ["GET", "POST"], "description": "Zeiterfassungen auflisten/erstellen" },
+        { "path": "/dienstleistungen/[id]", "methods": ["GET", "PUT", "DELETE"], "description": "Einzelne Zeiterfassung" },
+        { "path": "/dienstleistungen/[id]/beenden", "methods": ["POST"], "description": "Laufende Erfassung beenden" },
+        { "path": "/honorarnoten", "methods": ["GET", "POST"], "description": "Rechnungen auflisten/erstellen" },
+        { "path": "/honorarnoten/[id]", "methods": ["GET", "PUT", "DELETE"], "description": "Einzelne Rechnung" },
+        { "path": "/statistiken/monatlich", "methods": ["GET"], "description": "Monatliche Stundenübersicht" },
+        { "path": "/statistiken/taeglich", "methods": ["GET"], "description": "Tägliche Stundenübersicht" }
+      ]
+    },
+    "db_pool": {
+      "location": "src/db-timebook.ts",
+      "config": {
+        "host": "process.env.TIMEBOOK_DB_HOST || '192.168.178.25'",
+        "port": "parseInt(process.env.TIMEBOOK_DB_PORT || '5432')",
+        "user": "process.env.TIMEBOOK_DB_USER || 'marijan'",
+        "password": "process.env.TIMEBOOK_DB_PASSWORD",
+        "database": "db_timebook",
+        "max": 10,
+        "idleTimeoutMillis": 30000,
+        "connectionTimeoutMillis": 5000
+      }
+    }
+  },
+  "validation_rules": {
+    "zeiterfassung": {
+      "pflichtfelder": ["datum", "start_zeit", "ende_zeit"],
+      "regeln": [
+        {
+          "name": "datum_format",
+          "format": "YYYY-MM-DD",
+          "zukunft_erlaubt": false,
+          "error": "Bitte Datum angeben."
+        },
+        {
+          "name": "zeit_format",
+          "format": "HH:MM (24h)",
+          "pattern": "^([01]?[0-9]|2[0-3]):([0-5][0-9])$",
+          "error_start": "Bitte Startzeit im Format HH:MM eingeben (z. B. 08:00).",
+          "error_ende": "Bitte Endzeit im Format HH:MM eingeben (z. B. 17:30)."
+        },
+        {
+          "name": "start_vor_ende",
+          "check": "startzeit < endzeit",
+          "error": "Die Startzeit darf nicht nach der Endzeit liegen."
+        },
+        {
+          "name": "dauer_nicht_null",
+          "check": "dauer > 0",
+          "error": "Die Dauer darf nicht 0 sein."
+        },
+        {
+          "name": "max_dauer",
+          "max_stunden": 16,
+          "max_minuten": 960,
+          "error": "Die erfasste Dauer überschreitet den erlaubten Maximalwert (16 Stunden)."
+        }
+      ],
+      "dauer_berechnung": {
+        "formel": "(ende_stunden * 60 + ende_minuten) - (start_stunden * 60 + start_minuten)",
+        "anzeige_format": "H:MM",
+        "beispiele": [
+          { "von": "08:00", "bis": "12:00", "dauer": "4:00", "valid": true },
+          { "von": "09:30", "bis": "09:45", "dauer": "0:15", "valid": true },
+          { "von": "18:00", "bis": "17:59", "dauer": null, "valid": false, "error": "Startzeit nach Endzeit" },
+          { "von": "08:00", "bis": "08:00", "dauer": "0:00", "valid": false, "error": "Dauer ist 0" },
+          { "von": "06:00", "bis": "23:00", "dauer": "17:00", "valid": false, "error": "Überschreitet 16h" }
+        ]
+      }
+    }
+  },
+  "test_data": {
+    "admin_user": {
+      "username": "admin",
+      "email": "admin@example.com",
+      "password_plain": "Admin123!",
+      "vorname": "System",
+      "nachname": "Administrator",
+      "admin": 1
+    },
+    "test_user": {
+      "username": "max.muster",
+      "email": "max.muster@example.com",
+      "password_plain": "Test123!",
+      "vorname": "Max",
+      "nachname": "Muster",
+      "admin": 0
+    }
+  }
+}
