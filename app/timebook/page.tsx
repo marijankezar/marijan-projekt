@@ -8,7 +8,8 @@ import {
   Calendar, Building2, RefreshCw, ChevronDown, ChevronUp,
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
-  Shield, Download, ChevronLeft, ChevronRight, CalendarDays
+  Shield, Download, ChevronLeft, ChevronRight, CalendarDays,
+  Star, Moon, Sun, Bell, BellOff, Zap
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -79,6 +80,15 @@ interface CurrentUser {
   admin: number;
 }
 
+interface Favorit {
+  id: string;
+  kunde_id: string;
+  kunde_name: string;
+  kategorie_ids: number[];
+  titel: string;
+  beschreibung: string;
+}
+
 export default function TimeBookPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -105,9 +115,66 @@ export default function TimeBookPage() {
   const [sessionWarning, setSessionWarning] = useState(false);
   const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 Stunden in ms
 
-  // Timer für laufende Erfassung
+  // Dark Mode
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Timer Warnung (nach X Stunden)
+  const [timerWarningEnabled, setTimerWarningEnabled] = useState(true);
+  const [timerWarningShown, setTimerWarningShown] = useState(false);
+  const TIMER_WARNING_HOURS = 4; // Warnung nach 4 Stunden
+
+  // Benachrichtigungs-Permission Status
+  const [notificationPermission, setNotificationPermission] = useState<'default' | 'granted' | 'denied'>('default');
+
+  // Favoriten
+  const [favoriten, setFavoriten] = useState<Favorit[]>([]);
+
+  // Dark Mode initialisieren
   useEffect(() => {
-    if (!laufend) return;
+    const savedDarkMode = localStorage.getItem('timebook_darkmode');
+    if (savedDarkMode !== null) {
+      setDarkMode(savedDarkMode === 'true');
+    } else {
+      // System-Präferenz prüfen
+      setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+  }, []);
+
+  // Dark Mode anwenden
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('timebook_darkmode', darkMode.toString());
+  }, [darkMode]);
+
+  // Favoriten laden
+  useEffect(() => {
+    const savedFavoriten = localStorage.getItem('timebook_favoriten');
+    if (savedFavoriten) {
+      try {
+        setFavoriten(JSON.parse(savedFavoriten));
+      } catch {
+        setFavoriten([]);
+      }
+    }
+  }, []);
+
+  // Benachrichtigungs-Permission prüfen
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  // Timer für laufende Erfassung + Warnung
+  useEffect(() => {
+    if (!laufend) {
+      setTimerWarningShown(false);
+      return;
+    }
 
     const interval = setInterval(() => {
       const start = new Date(`${laufend.start_datum}T${laufend.start_zeit}`);
@@ -117,10 +184,22 @@ export default function TimeBookPage() {
       const hours = Math.floor(diffMinutes / 60);
       const minutes = diffMinutes % 60;
       setLaufzeitDisplay(`${hours}:${minutes.toString().padStart(2, '0')}`);
+
+      // Timer-Warnung prüfen
+      if (timerWarningEnabled && hours >= TIMER_WARNING_HOURS && !timerWarningShown) {
+        setTimerWarningShown(true);
+        // Browser-Benachrichtigung wenn erlaubt
+        if (Notification.permission === 'granted') {
+          new Notification('TimeBook - Timer läuft lange!', {
+            body: `Dein Timer läuft bereits ${hours} Stunden. Vergessen zu stoppen?`,
+            icon: '/favicon.ico'
+          });
+        }
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [laufend]);
+  }, [laufend, timerWarningEnabled, timerWarningShown, TIMER_WARNING_HOURS]);
 
   // Session Timer
   useEffect(() => {
@@ -173,6 +252,64 @@ export default function TimeBookPage() {
     localStorage.setItem('timebook_session_start', now.toString());
     setSessionStart(now);
     setSessionWarning(false);
+  };
+
+  // Favoriten speichern
+  const saveFavoriten = (newFavoriten: Favorit[]) => {
+    setFavoriten(newFavoriten);
+    localStorage.setItem('timebook_favoriten', JSON.stringify(newFavoriten));
+  };
+
+  // Favorit hinzufügen
+  const addFavorit = (favorit: Omit<Favorit, 'id'>) => {
+    const newFavorit: Favorit = {
+      ...favorit,
+      id: Date.now().toString()
+    };
+    saveFavoriten([...favoriten, newFavorit]);
+  };
+
+  // Favorit löschen
+  const removeFavorit = (id: string) => {
+    saveFavoriten(favoriten.filter(f => f.id !== id));
+  };
+
+  // Schnellstart mit Favorit
+  const startFromFavorit = async (favorit: Favorit) => {
+    try {
+      const res = await fetch('/api/timebook/zeiterfassung/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kunde_id: favorit.kunde_id,
+          kategorie_ids: favorit.kategorie_ids.length > 0 ? favorit.kategorie_ids : null,
+          titel: favorit.titel || null,
+          beschreibung: favorit.beschreibung
+        })
+      });
+
+      if (res.ok) {
+        loadData();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Fehler beim Starten');
+      }
+    } catch {
+      setError('Netzwerkfehler');
+    }
+  };
+
+  // Benachrichtigungen aktivieren
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        new Notification('TimeBook', {
+          body: 'Benachrichtigungen sind jetzt aktiviert!'
+        });
+      }
+    }
   };
 
   // Auth prüfen
@@ -399,6 +536,39 @@ export default function TimeBookPage() {
               </div>
             )}
 
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              title={darkMode ? 'Light Mode aktivieren' : 'Dark Mode aktivieren'}
+            >
+              {darkMode ? (
+                <Sun className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <Moon className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
+
+            {/* Benachrichtigungen */}
+            <button
+              onClick={requestNotificationPermission}
+              className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors ${
+                notificationPermission === 'granted'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+              title={notificationPermission === 'granted'
+                ? 'Benachrichtigungen aktiviert'
+                : 'Benachrichtigungen aktivieren (für Timer-Warnungen)'
+              }
+            >
+              {notificationPermission === 'granted' ? (
+                <Bell className="w-5 h-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <BellOff className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+
             {/* User Info */}
             {currentUser && (
               <div className="flex items-center gap-3 px-3 sm:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
@@ -438,21 +608,33 @@ export default function TimeBookPage() {
 
         {/* Laufende Erfassung Banner */}
         {laufend && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl text-white shadow-lg">
+          <div className={`mb-6 p-4 rounded-2xl text-white shadow-lg ${
+            timerWarningShown
+              ? 'bg-gradient-to-r from-orange-500 to-red-500'
+              : 'bg-gradient-to-r from-green-500 to-emerald-600'
+          }`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Timer className="w-6 h-6 animate-pulse" />
+                  {timerWarningShown ? (
+                    <AlertCircle className="w-6 h-6 animate-bounce" />
+                  ) : (
+                    <Timer className="w-6 h-6 animate-pulse" />
+                  )}
                 </div>
                 <div>
-                  <p className="text-sm opacity-90">Laufende Zeiterfassung</p>
+                  <p className="text-sm opacity-90">
+                    {timerWarningShown ? '⚠️ Timer läuft lange!' : 'Laufende Zeiterfassung'}
+                  </p>
                   <p className="text-xl font-bold">{laufend.titel || laufend.beschreibung}</p>
                   <p className="text-sm opacity-90">{laufend.kunde_name || laufend.firmenname}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="text-3xl font-mono font-bold">{laufzeitDisplay}</p>
+                  <p className={`text-3xl font-mono font-bold ${timerWarningShown ? 'animate-pulse' : ''}`}>
+                    {laufzeitDisplay}
+                  </p>
                   <p className="text-sm opacity-90">seit {laufend.start_zeit} Uhr</p>
                 </div>
                 <button
@@ -519,6 +701,10 @@ export default function TimeBookPage() {
             laufend={laufend}
             onStop={stopTimer}
             onRefresh={loadData}
+            favoriten={favoriten}
+            onAddFavorit={addFavorit}
+            onRemoveFavorit={removeFavorit}
+            onStartFromFavorit={startFromFavorit}
           />
         )}
 
@@ -829,13 +1015,21 @@ function ZeiterfassungTab({
   kategorien,
   laufend,
   onStop,
-  onRefresh
+  onRefresh,
+  favoriten,
+  onAddFavorit,
+  onRemoveFavorit,
+  onStartFromFavorit
 }: {
   kunden: Kunde[];
   kategorien: Kategorie[];
   laufend: LaufendeErfassung | null;
   onStop: () => void;
   onRefresh: () => void;
+  favoriten: Favorit[];
+  onAddFavorit: (favorit: Omit<Favorit, 'id'>) => void;
+  onRemoveFavorit: (id: string) => void;
+  onStartFromFavorit: (favorit: Favorit) => void;
 }) {
   const [mode, setMode] = useState<'timer' | 'manual'>('timer');
   const [formData, setFormData] = useState({
@@ -1018,6 +1212,45 @@ function ZeiterfassungTab({
         </button>
       </div>
 
+      {/* Favoriten / Schnellstart */}
+      {favoriten.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-yellow-500" />
+            Schnellstart mit Favoriten
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {favoriten.map(fav => (
+              <div
+                key={fav.id}
+                className="group flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl hover:shadow-md transition-all"
+              >
+                <button
+                  onClick={() => onStartFromFavorit(fav)}
+                  className="flex items-center gap-2 text-left"
+                  title={`${fav.beschreibung}\n${fav.kunde_name}`}
+                >
+                  <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {fav.titel || fav.beschreibung.slice(0, 30)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
+                    ({fav.kunde_name})
+                  </span>
+                </button>
+                <button
+                  onClick={() => onRemoveFavorit(fav.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                  title="Favorit entfernen"
+                >
+                  <X className="w-3 h-3 text-red-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={mode === 'timer' ? startTimer : saveManualEntry} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           {mode === 'timer' ? (
@@ -1148,20 +1381,44 @@ function ZeiterfassungTab({
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting || (mode === 'timer' && !!laufend)}
-          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium transition-all disabled:opacity-50"
-        >
-          {submitting ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : mode === 'timer' ? (
-            <Play className="w-5 h-5" />
-          ) : (
-            <Save className="w-5 h-5" />
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={submitting || (mode === 'timer' && !!laufend)}
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium transition-all disabled:opacity-50"
+          >
+            {submitting ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : mode === 'timer' ? (
+              <Play className="w-5 h-5" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+            {mode === 'timer' ? 'Timer starten' : 'Eintrag speichern'}
+          </button>
+
+          {/* Als Favorit speichern */}
+          {formData.kunde_id && formData.beschreibung && (
+            <button
+              type="button"
+              onClick={() => {
+                const kundeName = kunden.find(k => k.id === formData.kunde_id);
+                onAddFavorit({
+                  kunde_id: formData.kunde_id,
+                  kunde_name: kundeName?.firmenname || `${kundeName?.ansprechperson_vorname} ${kundeName?.ansprechperson_nachname}` || 'Unbekannt',
+                  kategorie_ids: formData.kategorie_ids,
+                  titel: formData.titel,
+                  beschreibung: formData.beschreibung
+                });
+              }}
+              className="flex items-center justify-center gap-2 px-4 py-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 rounded-xl font-medium hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-all"
+              title="Als Favorit für Schnellstart speichern"
+            >
+              <Star className="w-5 h-5" />
+              <span className="hidden sm:inline">Favorit</span>
+            </button>
           )}
-          {mode === 'timer' ? 'Timer starten' : 'Eintrag speichern'}
-        </button>
+        </div>
       </form>
     </div>
   );
