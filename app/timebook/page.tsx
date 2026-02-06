@@ -1326,7 +1326,7 @@ function KategorienTab({
                     <p className="font-medium text-gray-900 dark:text-white">{kat.bezeichnung}</p>
                     {kat.standard_stundensatz && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {kat.standard_stundensatz.toFixed(2)} €/h
+                        {Number(kat.standard_stundensatz).toFixed(2)} €/h
                       </p>
                     )}
                   </div>
