@@ -27,7 +27,13 @@ export async function GET(request: NextRequest) {
     let query = `
       SELECT d.*, k.firmenname, k.kundennummer,
              COALESCE(k.ansprechperson_vorname || ' ' || k.ansprechperson_nachname, k.firmenname) as kunde_name,
-             dk.bezeichnung as kategorie_bezeichnung, dk.farbe as kategorie_farbe
+             dk.bezeichnung as kategorie_bezeichnung, dk.farbe as kategorie_farbe,
+             (
+               SELECT json_agg(json_build_object('id', dk2.id, 'bezeichnung', dk2.bezeichnung, 'farbe', dk2.farbe))
+               FROM zeiterfassung_kategorien zk
+               JOIN dienstleistungskategorien dk2 ON zk.kategorie_id = dk2.id
+               WHERE zk.zeiterfassung_id = d.id
+             ) as kategorien
       FROM dienstleistungen d
       LEFT JOIN kunden k ON d.kunde_id = k.id
       LEFT JOIN dienstleistungskategorien dk ON d.kategorie_id = dk.id
@@ -115,7 +121,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      kunde_id, kategorie_id,
+      kunde_id, kategorie_id, kategorie_ids,
       start_datum, start_zeit, ende_datum, ende_zeit,
       titel, beschreibung, stundensatz
     } = body;
@@ -155,6 +161,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Kunde nicht gefunden' }, { status: 404 });
     }
 
+    // Erste Kategorie für legacy-Feld verwenden
+    const firstKategorieId = kategorie_ids && kategorie_ids.length > 0 ? kategorie_ids[0] : (kategorie_id || null);
+
     const result = await timebookPool.query(
       `INSERT INTO dienstleistungen (
         mitarbeiter_id, kunde_id, kategorie_id,
@@ -163,12 +172,25 @@ export async function POST(request: NextRequest) {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *`,
       [
-        session.user.id, kunde_id, kategorie_id || null,
+        session.user.id, kunde_id, firstKategorieId,
         start_datum, start_zeit, ende_datum || null, ende_zeit || null,
         titel || null, beschreibung, stundensatz || null,
         !!(ende_datum && ende_zeit) // abgeschlossen wenn Ende angegeben
       ]
     );
+
+    const zeiterfassungId = result.rows[0].id;
+
+    // Mehrere Kategorien in Zuordnungstabelle speichern
+    if (kategorie_ids && Array.isArray(kategorie_ids) && kategorie_ids.length > 0) {
+      for (const katId of kategorie_ids) {
+        await timebookPool.query(
+          `INSERT INTO zeiterfassung_kategorien (zeiterfassung_id, kategorie_id)
+           VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [zeiterfassungId, katId]
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,
