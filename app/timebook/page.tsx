@@ -8,7 +8,7 @@ import {
   Calendar, Building2, RefreshCw, ChevronDown, ChevronUp,
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
-  Shield
+  Shield, Download, ChevronLeft, ChevronRight, CalendarDays
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -68,7 +68,7 @@ interface Statistiken {
   laufende_erfassungen: number;
 }
 
-type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien';
+type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'export';
 
 interface CurrentUser {
   id: number;
@@ -482,9 +482,11 @@ export default function TimeBookPage() {
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'zeiterfassung', label: 'Zeiterfassung', icon: Clock },
+            { id: 'woche', label: 'Wochenansicht', icon: CalendarDays },
             { id: 'kunden', label: 'Kunden', icon: Users },
             { id: 'kategorien', label: 'Kategorien', icon: Tag },
-            { id: 'eintraege', label: 'Einträge', icon: FileText }
+            { id: 'eintraege', label: 'Einträge', icon: FileText },
+            { id: 'export', label: 'Export', icon: Download }
           ].map(tab => (
             <button
               key={tab.id}
@@ -540,6 +542,21 @@ export default function TimeBookPage() {
             kunden={kunden}
             kategorien={kategorien}
             onRefresh={loadData}
+          />
+        )}
+
+        {activeTab === 'woche' && (
+          <WochenansichtTab
+            eintraege={eintraege}
+            onRefresh={loadData}
+          />
+        )}
+
+        {activeTab === 'export' && (
+          <ExportTab
+            eintraege={eintraege}
+            kunden={kunden}
+            kategorien={kategorien}
           />
         )}
       </div>
@@ -1869,6 +1886,474 @@ function EintraegeTab({
               </div>
             ))}
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Wochenansicht Tab
+function WochenansichtTab({
+  eintraege,
+  onRefresh
+}: {
+  eintraege: Zeiterfassung[];
+  onRefresh: () => void;
+}) {
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Montag als Wochenstart
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  });
+
+  const getWeekDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(currentWeekStart);
+      day.setDate(currentWeekStart.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const weekDays = getWeekDays();
+
+  const previousWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() - 7);
+    setCurrentWeekStart(newStart);
+  };
+
+  const nextWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() + 7);
+    setCurrentWeekStart(newStart);
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    setCurrentWeekStart(monday);
+  };
+
+  const getEintraegeForDay = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return eintraege.filter(e => e.start_datum === dateStr);
+  };
+
+  const getDayTotal = (date: Date): number => {
+    const dayEntries = getEintraegeForDay(date);
+    return dayEntries.reduce((sum, e) => sum + (e.dauer_minuten || 0), 0);
+  };
+
+  const getWeekTotal = (): number => {
+    return weekDays.reduce((sum, day) => sum + getDayTotal(day), 0);
+  };
+
+  const formatMinutes = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const isToday = (date: Date): boolean => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+  return (
+    <div className="space-y-4">
+      {/* Header mit Navigation */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <CalendarDays className="w-5 h-5" />
+          Wochenansicht
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={previousWeek}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={goToToday}
+            className="px-3 py-1.5 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50"
+          >
+            Heute
+          </button>
+          <button
+            onClick={nextWeek}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Wochendatum */}
+      <div className="text-center text-gray-600 dark:text-gray-400">
+        {currentWeekStart.toLocaleDateString('de-DE', { day: '2-digit', month: 'long' })} - {weekDays[6].toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+      </div>
+
+      {/* Wochenübersicht Karten */}
+      <div className="grid grid-cols-7 gap-2">
+        {weekDays.map((day, index) => {
+          const dayEntries = getEintraegeForDay(day);
+          const dayTotal = getDayTotal(day);
+          const today = isToday(day);
+
+          return (
+            <div
+              key={index}
+              className={`bg-white dark:bg-gray-800 rounded-xl border p-3 min-h-[120px] ${
+                today
+                  ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              {/* Tag Header */}
+              <div className="text-center mb-2">
+                <p className={`text-xs font-medium ${today ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {dayNames[index]}
+                </p>
+                <p className={`text-lg font-bold ${today ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white'}`}>
+                  {day.getDate()}
+                </p>
+              </div>
+
+              {/* Einträge */}
+              <div className="space-y-1">
+                {dayEntries.slice(0, 3).map(entry => (
+                  <div
+                    key={entry.id}
+                    className="text-xs p-1.5 rounded bg-gray-50 dark:bg-gray-700/50 truncate"
+                    title={entry.beschreibung}
+                  >
+                    <span className="font-medium">{formatMinutes(entry.dauer_minuten || 0)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 ml-1 hidden sm:inline">
+                      {entry.titel || entry.beschreibung.slice(0, 15)}
+                    </span>
+                  </div>
+                ))}
+                {dayEntries.length > 3 && (
+                  <p className="text-xs text-gray-400 text-center">+{dayEntries.length - 3} mehr</p>
+                )}
+              </div>
+
+              {/* Tagessumme */}
+              {dayTotal > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
+                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                    {formatMinutes(dayTotal)}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Wochensumme */}
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-80">Wochensumme</p>
+            <p className="text-3xl font-bold">{formatMinutes(getWeekTotal())}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm opacity-80">Stunden</p>
+            <p className="text-xl font-semibold">{(getWeekTotal() / 60).toFixed(1)} h</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Export Tab
+function ExportTab({
+  eintraege,
+  kunden,
+  kategorien
+}: {
+  eintraege: Zeiterfassung[];
+  kunden: Kunde[];
+  kategorien: Kategorie[];
+}) {
+  const [exportRange, setExportRange] = useState<'week' | 'month' | 'year' | 'custom'>('month');
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(1); // Erster des Monats
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [selectedKunde, setSelectedKunde] = useState<string>('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
+
+  const updateDateRange = (range: 'week' | 'month' | 'year' | 'custom') => {
+    setExportRange(range);
+    const today = new Date();
+    const end = today.toISOString().split('T')[0];
+    let start: Date;
+
+    switch (range) {
+      case 'week':
+        start = new Date(today);
+        start.setDate(today.getDate() - 7);
+        break;
+      case 'month':
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      case 'year':
+        start = new Date(today.getFullYear(), 0, 1);
+        break;
+      default:
+        return;
+    }
+
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end);
+  };
+
+  const getFilteredEintraege = () => {
+    return eintraege.filter(e => {
+      const entryDate = e.start_datum;
+      const inRange = entryDate >= startDate && entryDate <= endDate;
+      const matchesKunde = !selectedKunde || e.kunde_id === selectedKunde;
+      return inRange && matchesKunde && e.abgeschlossen;
+    });
+  };
+
+  const filteredEintraege = getFilteredEintraege();
+
+  const getTotalMinutes = () => {
+    return filteredEintraege.reduce((sum, e) => sum + (e.dauer_minuten || 0), 0);
+  };
+
+  const formatMinutes = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const exportCSV = () => {
+    const headers = ['Datum', 'Startzeit', 'Endzeit', 'Dauer (h)', 'Kunde', 'Kategorie', 'Titel', 'Beschreibung'];
+    const rows = filteredEintraege.map(e => [
+      new Date(e.start_datum).toLocaleDateString('de-DE'),
+      e.start_zeit?.slice(0, 5) || '',
+      e.ende_zeit?.slice(0, 5) || '',
+      e.dauer_stunden?.toFixed(2) || '0',
+      e.kunde_name || e.firmenname || '',
+      e.kategorie_bezeichnung || '',
+      e.titel || '',
+      e.beschreibung.replace(/"/g, '""') // Escape quotes
+    ]);
+
+    // BOM für Excel UTF-8
+    const BOM = '\uFEFF';
+    const csvContent = BOM + [
+      headers.join(';'),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(';'))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `zeiterfassung_${startDate}_${endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportJSON = () => {
+    const data = {
+      exportiert_am: new Date().toISOString(),
+      zeitraum: { von: startDate, bis: endDate },
+      gesamt_stunden: (getTotalMinutes() / 60).toFixed(2),
+      eintraege: filteredEintraege.map(e => ({
+        datum: e.start_datum,
+        startzeit: e.start_zeit,
+        endzeit: e.ende_zeit,
+        dauer_stunden: e.dauer_stunden,
+        kunde: e.kunde_name || e.firmenname,
+        kategorie: e.kategorie_bezeichnung,
+        titel: e.titel,
+        beschreibung: e.beschreibung
+      }))
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `zeiterfassung_${startDate}_${endDate}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = () => {
+    if (exportFormat === 'csv') {
+      exportCSV();
+    } else {
+      exportJSON();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <Download className="w-5 h-5" />
+        Zeiterfassung exportieren
+      </h2>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        {/* Zeitraum Schnellauswahl */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Zeitraum
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'week', label: 'Letzte 7 Tage' },
+              { id: 'month', label: 'Dieser Monat' },
+              { id: 'year', label: 'Dieses Jahr' },
+              { id: 'custom', label: 'Benutzerdefiniert' }
+            ].map(option => (
+              <button
+                key={option.id}
+                onClick={() => updateDateRange(option.id as typeof exportRange)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  exportRange === option.id
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Datumsfelder */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Von
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => { setStartDate(e.target.value); setExportRange('custom'); }}
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Bis
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => { setEndDate(e.target.value); setExportRange('custom'); }}
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Kunde Filter */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Kunde (optional)
+          </label>
+          <select
+            value={selectedKunde}
+            onChange={e => setSelectedKunde(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+          >
+            <option value="">Alle Kunden</option>
+            {kunden.map(k => (
+              <option key={k.id} value={k.id}>
+                {k.firmenname || `${k.ansprechperson_vorname} ${k.ansprechperson_nachname}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Export Format */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Format
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setExportFormat('csv')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                exportFormat === 'csv'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              CSV (Excel)
+            </button>
+            <button
+              onClick={() => setExportFormat('json')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                exportFormat === 'json'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              JSON
+            </button>
+          </div>
+        </div>
+
+        {/* Vorschau */}
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-2">Vorschau</h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{filteredEintraege.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Einträge</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatMinutes(getTotalMinutes())}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Stunden</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{(getTotalMinutes() / 60).toFixed(1)} h</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Dezimal</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Export Button */}
+        <button
+          onClick={handleExport}
+          disabled={filteredEintraege.length === 0}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="w-5 h-5" />
+          {exportFormat === 'csv' ? 'Als CSV exportieren' : 'Als JSON exportieren'}
+        </button>
+
+        {filteredEintraege.length === 0 && (
+          <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+            Keine abgeschlossenen Einträge im ausgewählten Zeitraum
+          </p>
         )}
       </div>
     </div>
