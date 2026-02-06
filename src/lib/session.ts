@@ -17,11 +17,11 @@ export const sessionOptions = {
   password: process.env.SESSION_SECRET!,
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
-    // Session läuft nach 10 Minuten ab (600 Sekunden)
-    maxAge: 60 * 10, // 10 Minuten in Sekunden
+    // Session läuft nach 8 Stunden ab
+    maxAge: 60 * 60 * 8, // 8 Stunden in Sekunden
   },
-  // TTL für die Session (10 Minuten)
-  ttl: 60 * 10,
+  // TTL für die Session (8 Stunden)
+  ttl: 60 * 60 * 8,
 };
 
 export async function getSession() {
