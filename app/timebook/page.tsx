@@ -128,32 +128,41 @@ export default function TimeBookPage() {
 
     // Session-Start aus localStorage laden oder neu setzen
     const storedStart = localStorage.getItem('timebook_session_start');
-    const start = storedStart ? parseInt(storedStart) : Date.now();
+    const initialStart = storedStart ? parseInt(storedStart) : Date.now();
     if (!storedStart) {
-      localStorage.setItem('timebook_session_start', start.toString());
+      localStorage.setItem('timebook_session_start', initialStart.toString());
     }
-    setSessionStart(start);
+    setSessionStart(initialStart);
 
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - start;
+    const updateTimer = () => {
+      // Immer aktuellen Wert aus localStorage lesen
+      const currentStart = parseInt(localStorage.getItem('timebook_session_start') || initialStart.toString());
+      const elapsed = Date.now() - currentStart;
       const remaining = SESSION_DURATION - elapsed;
 
       if (remaining <= 0) {
         setSessionRemaining('Abgelaufen');
         setSessionWarning(true);
-        clearInterval(interval);
         return;
       }
 
       const hours = Math.floor(remaining / (60 * 60 * 1000));
       const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+      const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
 
       if (remaining < 30 * 60 * 1000) { // Warnung unter 30 Minuten
         setSessionWarning(true);
+      } else {
+        setSessionWarning(false);
       }
 
-      setSessionRemaining(`${hours}:${minutes.toString().padStart(2, '0')}`);
-    }, 1000);
+      setSessionRemaining(`${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    // Sofort einmal ausführen
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated, SESSION_DURATION]);
