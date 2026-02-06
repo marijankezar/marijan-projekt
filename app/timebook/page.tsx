@@ -7,7 +7,8 @@ import {
   Clock, Play, Square, Users, FileText, BarChart3, Plus,
   Calendar, Building2, RefreshCw, ChevronDown, ChevronUp,
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
-  StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search
+  StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
+  Shield
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -98,6 +99,12 @@ export default function TimeBookPage() {
   const [showNeueErfassung, setShowNeueErfassung] = useState(false);
   const [showNeuerKunde, setShowNeuerKunde] = useState(false);
 
+  // Session Timer
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [sessionRemaining, setSessionRemaining] = useState<string>('');
+  const [sessionWarning, setSessionWarning] = useState(false);
+  const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 Stunden in ms
+
   // Timer für laufende Erfassung
   useEffect(() => {
     if (!laufend) return;
@@ -114,6 +121,50 @@ export default function TimeBookPage() {
 
     return () => clearInterval(interval);
   }, [laufend]);
+
+  // Session Timer
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Session-Start aus localStorage laden oder neu setzen
+    const storedStart = localStorage.getItem('timebook_session_start');
+    const start = storedStart ? parseInt(storedStart) : Date.now();
+    if (!storedStart) {
+      localStorage.setItem('timebook_session_start', start.toString());
+    }
+    setSessionStart(start);
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const remaining = SESSION_DURATION - elapsed;
+
+      if (remaining <= 0) {
+        setSessionRemaining('Abgelaufen');
+        setSessionWarning(true);
+        clearInterval(interval);
+        return;
+      }
+
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+
+      if (remaining < 30 * 60 * 1000) { // Warnung unter 30 Minuten
+        setSessionWarning(true);
+      }
+
+      setSessionRemaining(`${hours}:${minutes.toString().padStart(2, '0')}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, SESSION_DURATION]);
+
+  // Session bei Login zurücksetzen
+  const resetSessionTimer = () => {
+    const now = Date.now();
+    localStorage.setItem('timebook_session_start', now.toString());
+    setSessionStart(now);
+    setSessionWarning(false);
+  };
 
   // Auth prüfen
   const checkAuth = useCallback(async () => {
@@ -146,6 +197,7 @@ export default function TimeBookPage() {
       await fetch('/api/timebook/auth/logout', { method: 'POST' });
       setIsAuthenticated(false);
       setCurrentUser(null);
+      localStorage.removeItem('timebook_session_start'); // Session-Timer löschen
       router.push('/timebook/login');
     } catch (err) {
       console.error('Logout Fehler:', err);
@@ -321,10 +373,26 @@ export default function TimeBookPage() {
             <p className="text-gray-500 dark:text-gray-400 mt-1">Zeiterfassung & Projektverwaltung</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+            {/* Session Timer */}
+            {sessionRemaining && (
+              <div
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium ${
+                  sessionWarning
+                    ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400'
+                    : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                }`}
+                title="Verbleibende Session-Zeit"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Session:</span>
+                <span className="font-mono">{sessionRemaining}</span>
+              </div>
+            )}
+
             {/* User Info */}
             {currentUser && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
+              <div className="flex items-center gap-3 px-3 sm:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
                 <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
@@ -341,7 +409,7 @@ export default function TimeBookPage() {
 
             <button
               onClick={loadData}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               title="Aktualisieren"
             >
               <RefreshCw className="w-4 h-4" />
@@ -350,7 +418,7 @@ export default function TimeBookPage() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
               title="Abmelden"
             >
               <LogOut className="w-4 h-4" />
