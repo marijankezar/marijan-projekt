@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Clock, Play, Square, Users, FileText, BarChart3, Plus,
   Calendar, Building2, RefreshCw, ChevronDown, ChevronUp,
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
-  StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save
+  StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -558,6 +558,145 @@ function DashboardTab({
   );
 }
 
+// Searchable Kategorie Select Component
+function SearchableKategorieSelect({
+  kategorien,
+  selectedIds,
+  onToggle
+}: {
+  kategorien: Kategorie[];
+  selectedIds: number[];
+  onToggle: (id: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter kategorien based on search
+  const filtered = kategorien.filter(k =>
+    k.bezeichnung.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Get selected kategorien for display
+  const selectedKategorien = kategorien.filter(k => selectedIds.includes(k.id));
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Selected Tags */}
+      {selectedKategorien.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {selectedKategorien.map(k => (
+            <span
+              key={k.id}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium"
+            >
+              {k.farbe && (
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: k.farbe }}
+                />
+              )}
+              {k.bezeichnung}
+              <button
+                type="button"
+                onClick={() => onToggle(k.id)}
+                className="ml-1 hover:text-indigo-900 dark:hover:text-indigo-100"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          placeholder={selectedIds.length > 0 ? "Weitere Kategorie suchen..." : "Kategorie suchen..."}
+          className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg max-h-64 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+              {kategorien.length === 0 ? (
+                <span>Keine Kategorien vorhanden</span>
+              ) : (
+                <span>Keine Treffer für &quot;{search}&quot;</span>
+              )}
+            </div>
+          ) : (
+            <div className="py-1">
+              {filtered.map(k => {
+                const isSelected = selectedIds.includes(k.id);
+                return (
+                  <button
+                    key={k.id}
+                    type="button"
+                    onClick={() => {
+                      onToggle(k.id);
+                      setSearch('');
+                      inputRef.current?.focus();
+                    }}
+                    className={`w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors ${
+                      isSelected
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full flex-shrink-0 border-2"
+                      style={{
+                        backgroundColor: isSelected ? (k.farbe || '#6366f1') : 'transparent',
+                        borderColor: k.farbe || '#6366f1'
+                      }}
+                    />
+                    <span className="flex-1">{k.bezeichnung}</span>
+                    {k.standard_stundensatz && (
+                      <span className="text-xs text-gray-400">
+                        {Number(k.standard_stundensatz).toFixed(0)} €/h
+                      </span>
+                    )}
+                    {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Stat Card Component
 function StatCard({
   title,
@@ -889,40 +1028,16 @@ function ZeiterfassungTab({
           </div>
         </div>
 
-        {/* Kategorien Multi-Select */}
+        {/* Kategorien Multi-Select mit Suche */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Kategorien {kategorien.length === 0 && <span className="text-gray-400 font-normal">(keine vorhanden - erstelle welche im Tab &quot;Kategorien&quot;)</span>}
           </label>
-          {kategorien.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {kategorien.map(k => (
-                <button
-                  key={k.id}
-                  type="button"
-                  onClick={() => toggleKategorie(k.id)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                    formData.kategorie_ids.includes(k.id)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {k.farbe && (
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: k.farbe }}
-                    />
-                  )}
-                  {k.bezeichnung}
-                  {formData.kategorie_ids.includes(k.id) && <Check className="w-4 h-4" />}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Noch keine Kategorien vorhanden.
-            </p>
-          )}
+          <SearchableKategorieSelect
+            kategorien={kategorien}
+            selectedIds={formData.kategorie_ids}
+            onToggle={toggleKategorie}
+          />
         </div>
 
         <div className="mb-6">
