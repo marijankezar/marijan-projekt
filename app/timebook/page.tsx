@@ -1558,11 +1558,103 @@ function EintraegeTab({
   kategorien: Kategorie[];
   onRefresh: () => void;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    kunde_id: '',
+    titel: '',
+    beschreibung: '',
+    start_datum: '',
+    start_zeit: '',
+    ende_datum: '',
+    ende_zeit: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const formatDauer = (minuten: number | null): string => {
     if (!minuten) return '-';
     const h = Math.floor(minuten / 60);
     const m = minuten % 60;
     return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const startEdit = (eintrag: Zeiterfassung) => {
+    setEditForm({
+      kunde_id: eintrag.kunde_id,
+      titel: eintrag.titel || '',
+      beschreibung: eintrag.beschreibung,
+      start_datum: eintrag.start_datum,
+      start_zeit: eintrag.start_zeit?.slice(0, 5) || '',
+      ende_datum: eintrag.ende_datum || eintrag.start_datum,
+      ende_zeit: eintrag.ende_zeit?.slice(0, 5) || ''
+    });
+    setEditingId(eintrag.id);
+    setError(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setError(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    setError(null);
+
+    if (!editForm.beschreibung.trim()) {
+      setError('Beschreibung ist erforderlich');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/timebook/zeiterfassung/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kunde_id: editForm.kunde_id,
+          titel: editForm.titel || null,
+          beschreibung: editForm.beschreibung,
+          start_datum: editForm.start_datum,
+          start_zeit: editForm.start_zeit,
+          ende_datum: editForm.ende_zeit ? editForm.ende_datum : null,
+          ende_zeit: editForm.ende_zeit || null
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setEditingId(null);
+        onRefresh();
+      } else {
+        setError(data.error || 'Fehler beim Speichern');
+      }
+    } catch {
+      setError('Netzwerkfehler');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const deleteEintrag = async (id: string) => {
+    if (!confirm('Diesen Zeiteintrag wirklich löschen?')) return;
+
+    try {
+      const res = await fetch(`/api/timebook/zeiterfassung/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        onRefresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Fehler beim Löschen');
+      }
+    } catch {
+      alert('Netzwerkfehler');
+    }
   };
 
   return (
@@ -1579,38 +1671,201 @@ function EintraegeTab({
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {eintraege.map(eintrag => (
-              <div key={eintrag.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      eintrag.abgeschlossen
-                        ? 'bg-green-100 dark:bg-green-900/30'
-                        : 'bg-yellow-100 dark:bg-yellow-900/30'
-                    }`}>
-                      {eintrag.abgeschlossen ? (
-                        <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <Timer className="w-5 h-5 text-yellow-600 dark:text-yellow-400 animate-pulse" />
-                      )}
+              <div key={eintrag.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                {editingId === eintrag.id ? (
+                  /* Edit Form */
+                  <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                      <Edit3 className="w-4 h-4" />
+                      Eintrag bearbeiten
+                    </h3>
+
+                    {error && (
+                      <div className="mb-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Kunde</label>
+                        <select
+                          value={editForm.kunde_id}
+                          onChange={e => setEditForm({ ...editForm, kunde_id: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        >
+                          {kunden.map(k => (
+                            <option key={k.id} value={k.id}>
+                              {k.firmenname || `${k.ansprechperson_vorname} ${k.ansprechperson_nachname}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Datum</label>
+                        <input
+                          type="date"
+                          value={editForm.start_datum}
+                          onChange={e => setEditForm({ ...editForm, start_datum: e.target.value, ende_datum: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Startzeit</label>
+                        <input
+                          type="time"
+                          value={editForm.start_zeit}
+                          onChange={e => setEditForm({ ...editForm, start_zeit: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Endzeit</label>
+                        <input
+                          type="time"
+                          value={editForm.ende_zeit}
+                          onChange={e => setEditForm({ ...editForm, ende_zeit: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        />
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {eintrag.titel || eintrag.beschreibung}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {eintrag.kunde_name || eintrag.firmenname} • {new Date(eintrag.start_datum).toLocaleDateString('de-DE')}
-                      </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Titel (optional)</label>
+                        <input
+                          type="text"
+                          value={editForm.titel}
+                          onChange={e => setEditForm({ ...editForm, titel: e.target.value })}
+                          placeholder="z.B. Meeting, Support..."
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Beschreibung *</label>
+                        <input
+                          type="text"
+                          value={editForm.beschreibung}
+                          onChange={e => setEditForm({ ...editForm, beschreibung: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEdit}
+                        disabled={submitting}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 text-sm disabled:opacity-50"
+                      >
+                        {submitting ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                        Speichern
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm"
+                      >
+                        <X className="w-4 h-4" />
+                        Abbrechen
+                      </button>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      {formatDauer(eintrag.dauer_minuten)}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {eintrag.start_zeit} - {eintrag.ende_zeit || 'läuft'}
-                    </p>
+                ) : (
+                  /* Normal View */
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div
+                        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                        onClick={() => setExpandedId(expandedId === eintrag.id ? null : eintrag.id)}
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          eintrag.abgeschlossen
+                            ? 'bg-green-100 dark:bg-green-900/30'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30'
+                        }`}>
+                          {eintrag.abgeschlossen ? (
+                            <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <Timer className="w-5 h-5 text-yellow-600 dark:text-yellow-400 animate-pulse" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">
+                            {eintrag.titel || eintrag.beschreibung}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {eintrag.kunde_name || eintrag.firmenname} • {new Date(eintrag.start_datum).toLocaleDateString('de-DE')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {formatDauer(eintrag.dauer_minuten)}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {eintrag.start_zeit?.slice(0, 5)} - {eintrag.ende_zeit?.slice(0, 5) || 'läuft'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => startEdit(eintrag)}
+                            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            title="Bearbeiten"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteEintrag(eintrag.id)}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Löschen"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details */}
+                    {expandedId === eintrag.id && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400">Beschreibung</p>
+                            <p className="text-gray-900 dark:text-white">{eintrag.beschreibung}</p>
+                          </div>
+                          {eintrag.titel && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Titel</p>
+                              <p className="text-gray-900 dark:text-white">{eintrag.titel}</p>
+                            </div>
+                          )}
+                          {eintrag.kategorie_bezeichnung && (
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Kategorie</p>
+                              <p className="text-gray-900 dark:text-white flex items-center gap-2">
+                                {eintrag.kategorie_farbe && (
+                                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: eintrag.kategorie_farbe }} />
+                                )}
+                                {eintrag.kategorie_bezeichnung}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400">Status</p>
+                            <p className={eintrag.abgeschlossen ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}>
+                              {eintrag.abgeschlossen ? 'Abgeschlossen' : 'Läuft'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>

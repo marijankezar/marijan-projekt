@@ -86,6 +86,9 @@ export async function PUT(
       }
     }
 
+    // Wenn Endzeit gesetzt wird, ist der Eintrag abgeschlossen
+    const isAbgeschlossen = abgeschlossen !== undefined ? abgeschlossen : (ende_zeit ? true : false);
+
     const result = await timebookPool.query(
       `UPDATE dienstleistungen SET
         kunde_id = COALESCE($1, kunde_id),
@@ -97,15 +100,16 @@ export async function PUT(
         titel = $7,
         beschreibung = COALESCE($8, beschreibung),
         stundensatz = $9,
-        abgeschlossen = COALESCE($10, abgeschlossen),
-        notizen = $11
+        abgeschlossen = $10,
+        notizen = $11,
+        aktualisiert_am = CURRENT_TIMESTAMP
       WHERE id = $12 AND mitarbeiter_id = $13
       RETURNING *`,
       [
         kunde_id, kategorie_id || null,
         start_datum, start_zeit, ende_datum || null, ende_zeit || null,
         titel || null, beschreibung, stundensatz || null,
-        abgeschlossen, notizen || null,
+        isAbgeschlossen, notizen || null,
         id, session.user.id
       ]
     );
