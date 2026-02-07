@@ -9,7 +9,7 @@ import {
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
   Shield, Download, ChevronLeft, ChevronRight, CalendarDays,
-  Star, Moon, Sun, Bell, BellOff, Zap
+  Star, Moon, Sun, Bell, BellOff, Zap, Filter, Keyboard
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -405,6 +405,63 @@ export default function TimeBookPage() {
     loadData();
   }, [loadData]);
 
+  // Tastenkürzel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignoriere wenn in Input/Textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+
+      // Ignoriere wenn Modifier gedrückt
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'n':
+          // Neue Zeiterfassung
+          if (!laufend) {
+            setActiveTab('zeiterfassung');
+          }
+          break;
+        case 's':
+          // Timer stoppen
+          if (laufend) {
+            stopTimer();
+          }
+          break;
+        case 'd':
+          // Dashboard
+          setActiveTab('dashboard');
+          break;
+        case 'e':
+          // Einträge
+          setActiveTab('eintraege');
+          break;
+        case 'w':
+          // Wochenansicht
+          setActiveTab('woche');
+          break;
+        case 'k':
+          // Kunden
+          setActiveTab('kunden');
+          break;
+        case 'r':
+          // Refresh
+          loadData();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [laufend, loadData]);
+
   // Zeiterfassung stoppen
   const stopTimer = async () => {
     try {
@@ -691,6 +748,8 @@ export default function TimeBookPage() {
             statistiken={statistiken}
             laufend={!!laufend}
             onStartClick={() => setActiveTab('zeiterfassung')}
+            eintraege={eintraege}
+            kunden={kunden}
           />
         )}
 
@@ -756,13 +815,48 @@ export default function TimeBookPage() {
 function DashboardTab({
   statistiken,
   laufend,
-  onStartClick
+  onStartClick,
+  eintraege,
+  kunden
 }: {
   statistiken: Statistiken | null;
   laufend: boolean;
   onStartClick: () => void;
+  eintraege: Zeiterfassung[];
+  kunden: Kunde[];
 }) {
   if (!statistiken) return null;
+
+  // Berechne Stunden pro Kunde (Top 5)
+  const stundenProKunde = eintraege.reduce((acc, e) => {
+    if (!e.ende_zeit || !e.start_zeit) return acc;
+    const [sh, sm] = e.start_zeit.split(':').map(Number);
+    const [eh, em] = e.ende_zeit.split(':').map(Number);
+    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    const hours = diffMinutes / 60;
+
+    const kundeName = e.kunde_name || e.firmenname || 'Unbekannt';
+    acc[kundeName] = (acc[kundeName] || 0) + hours;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topKunden = Object.entries(stundenProKunde)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  const maxKundenStunden = topKunden.length > 0 ? topKunden[0][1] : 1;
+
+  // Letzte 5 Einträge
+  const letzteEintraege = eintraege.slice(0, 5);
+
+  // Wochen-Ziel (z.B. 40 Stunden)
+  const wochenZiel = 40;
+  const wochenFortschritt = Math.min((statistiken.stunden.woche / wochenZiel) * 100, 100);
+
+  // Tages-Ziel (z.B. 8 Stunden)
+  const tagesZiel = 8;
+  const tagesFortschritt = Math.min((statistiken.stunden.heute / tagesZiel) * 100, 100);
 
   return (
     <div className="space-y-6">
@@ -794,8 +888,62 @@ function DashboardTab({
         />
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Fortschritts-Anzeigen */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Tages-Fortschritt */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Heute</h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {statistiken.stunden.heute.toFixed(1)} / {tagesZiel} h
+            </span>
+          </div>
+          <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                tagesFortschritt >= 100
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                  : tagesFortschritt >= 75
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-indigo-400 to-indigo-600'
+              }`}
+              style={{ width: `${tagesFortschritt}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {tagesFortschritt >= 100 ? '✓ Tagesziel erreicht!' : `Noch ${(tagesZiel - statistiken.stunden.heute).toFixed(1)} h bis zum Ziel`}
+          </p>
+        </div>
+
+        {/* Wochen-Fortschritt */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Diese Woche</h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {statistiken.stunden.woche.toFixed(1)} / {wochenZiel} h
+            </span>
+          </div>
+          <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                wochenFortschritt >= 100
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                  : wochenFortschritt >= 75
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-purple-400 to-purple-600'
+              }`}
+              style={{ width: `${wochenFortschritt}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {wochenFortschritt >= 100 ? '✓ Wochenziel erreicht!' : `Noch ${(wochenZiel - statistiken.stunden.woche).toFixed(1)} h bis zum Ziel`}
+          </p>
+        </div>
+      </div>
+
+      {/* Quick Actions & Top Kunden */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Quick Start Button */}
         <button
           onClick={onStartClick}
           disabled={laufend}
@@ -810,10 +958,11 @@ function DashboardTab({
             {laufend ? 'Timer läuft bereits' : 'Neue Zeiterfassung'}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {laufend ? 'Stoppe den laufenden Timer zuerst' : 'Starte eine neue Zeiterfassung'}
+            {laufend ? 'Stoppe den laufenden Timer zuerst' : 'Drücke [N] für Schnellstart'}
           </p>
         </button>
 
+        {/* Kunden Stats */}
         <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
           <Users className="w-10 h-10 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 dark:text-white">Kunden</h3>
@@ -823,16 +972,101 @@ function DashboardTab({
           <p className="text-sm text-gray-500 mt-1">{statistiken.kunden.total} gesamt</p>
         </div>
 
+        {/* Top Kunden */}
         <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <Timer className="w-10 h-10 text-green-600 mb-3" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Laufende Erfassungen</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-            {statistiken.laufende_erfassungen}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            {statistiken.laufende_erfassungen === 0 ? 'Keine aktiven Timer' : 'Timer aktiv'}
-          </p>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+            Top Kunden (Stunden)
+          </h3>
+          {topKunden.length === 0 ? (
+            <p className="text-sm text-gray-500">Keine Daten</p>
+          ) : (
+            <div className="space-y-3">
+              {topKunden.map(([name, stunden], index) => (
+                <div key={name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{name}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-mono">{stunden.toFixed(1)}h</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        index === 0 ? 'bg-green-500' : index === 1 ? 'bg-blue-500' : 'bg-gray-400'
+                      }`}
+                      style={{ width: `${(stunden / maxKundenStunden) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Letzte Einträge */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-indigo-600" />
+          Letzte Einträge
+        </h3>
+        {letzteEintraege.length === 0 ? (
+          <p className="text-sm text-gray-500">Keine Einträge vorhanden</p>
+        ) : (
+          <div className="space-y-3">
+            {letzteEintraege.map(eintrag => {
+              // Berechne Dauer
+              let dauer = '-';
+              if (eintrag.start_zeit && eintrag.ende_zeit) {
+                const [sh, sm] = eintrag.start_zeit.split(':').map(Number);
+                const [eh, em] = eintrag.ende_zeit.split(':').map(Number);
+                let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+                if (diffMinutes < 0) diffMinutes += 24 * 60;
+                const hours = Math.floor(diffMinutes / 60);
+                const minutes = diffMinutes % 60;
+                dauer = `${hours}:${minutes.toString().padStart(2, '0')}`;
+              }
+
+              return (
+                <div
+                  key={eintrag.id}
+                  className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    {eintrag.kategorie_farbe && (
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: eintrag.kategorie_farbe }}
+                      />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {eintrag.titel || eintrag.beschreibung.slice(0, 40)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {eintrag.kunde_name || eintrag.firmenname} • {eintrag.start_datum}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-medium text-gray-900 dark:text-white">{dauer}</p>
+                    <p className="text-xs text-gray-500">{eintrag.start_zeit} - {eintrag.ende_zeit || '...'}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Tastenkürzel Hinweis */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="font-medium">Tastenkürzel:</span>{' '}
+          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">N</kbd> Neue Erfassung •{' '}
+          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd> Timer stoppen •{' '}
+          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd> Dashboard •{' '}
+          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> Einträge
+        </p>
       </div>
     </div>
   );
@@ -1846,6 +2080,60 @@ function EintraegeTab({
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Such- und Filteroptionen
+  const [searchText, setSearchText] = useState('');
+  const [filterKunde, setFilterKunde] = useState<string>('');
+  const [filterDatumVon, setFilterDatumVon] = useState<string>('');
+  const [filterDatumBis, setFilterDatumBis] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Gefilterte Einträge
+  const filteredEintraege = eintraege.filter(e => {
+    // Text-Suche
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      const matchesText =
+        (e.titel?.toLowerCase().includes(searchLower)) ||
+        e.beschreibung.toLowerCase().includes(searchLower) ||
+        (e.kunde_name?.toLowerCase().includes(searchLower)) ||
+        (e.firmenname?.toLowerCase().includes(searchLower)) ||
+        (e.kategorie_bezeichnung?.toLowerCase().includes(searchLower));
+      if (!matchesText) return false;
+    }
+
+    // Kunde-Filter
+    if (filterKunde && e.kunde_id !== filterKunde) {
+      return false;
+    }
+
+    // Datum-Filter
+    if (filterDatumVon && e.start_datum < filterDatumVon) {
+      return false;
+    }
+    if (filterDatumBis && e.start_datum > filterDatumBis) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Statistiken für gefilterte Einträge
+  const gefilterteStunden = filteredEintraege.reduce((acc, e) => {
+    if (!e.start_zeit || !e.ende_zeit) return acc;
+    const [sh, sm] = e.start_zeit.split(':').map(Number);
+    const [eh, em] = e.ende_zeit.split(':').map(Number);
+    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    return acc + diffMinutes / 60;
+  }, 0);
+
+  const clearFilters = () => {
+    setSearchText('');
+    setFilterKunde('');
+    setFilterDatumVon('');
+    setFilterDatumBis('');
+  };
+
   const formatDauer = (minuten: number | null): string => {
     if (!minuten) return '-';
     const h = Math.floor(minuten / 60);
@@ -1933,18 +2221,113 @@ function EintraegeTab({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-        Letzte Einträge ({eintraege.length})
-      </h2>
+      {/* Header mit Suche */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Einträge ({filteredEintraege.length} von {eintraege.length})
+        </h2>
+
+        {/* Suchleiste */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Suchen..."
+              className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            {searchText && (
+              <button
+                onClick={() => setSearchText('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors ${
+              showFilters || filterKunde || filterDatumVon || filterDatumBis
+                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            <span className="text-sm">Filter</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Erweiterte Filter */}
+      {showFilters && (
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Kunde</label>
+              <select
+                value={filterKunde}
+                onChange={(e) => setFilterKunde(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="">Alle Kunden</option>
+                {kunden.map(k => (
+                  <option key={k.id} value={k.id}>
+                    {k.firmenname || `${k.ansprechperson_vorname} ${k.ansprechperson_nachname}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Von Datum</label>
+              <input
+                type="date"
+                value={filterDatumVon}
+                onChange={(e) => setFilterDatumVon(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Bis Datum</label>
+              <input
+                type="date"
+                value={filterDatumBis}
+                onChange={(e) => setFilterDatumBis(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Filter zurücksetzen
+              </button>
+            </div>
+          </div>
+
+          {/* Filter-Statistik */}
+          {(searchText || filterKunde || filterDatumVon || filterDatumBis) && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">{filteredEintraege.length}</span> Einträge gefunden •{' '}
+                <span className="font-medium">{gefilterteStunden.toFixed(1)}</span> Stunden gesamt
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        {eintraege.length === 0 ? (
+        {filteredEintraege.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            Noch keine Zeiterfassungen
+            {eintraege.length === 0 ? 'Noch keine Zeiterfassungen' : 'Keine Einträge mit diesen Filtern gefunden'}
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {eintraege.map(eintrag => (
+            {filteredEintraege.map(eintrag => (
               <div key={eintrag.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 {editingId === eintrag.id ? (
                   /* Edit Form */
