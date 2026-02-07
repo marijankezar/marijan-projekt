@@ -9,7 +9,8 @@ import {
   Timer, TrendingUp, AlertCircle, Check, X, Edit3, Trash2,
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
   Shield, Download, ChevronLeft, ChevronRight, CalendarDays,
-  Star, Moon, Sun, Bell, BellOff, Zap, Filter, Keyboard
+  Star, Moon, Sun, Bell, BellOff, Zap, Filter, Keyboard,
+  Copy, CalendarRange, Euro, StickyNote
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -69,7 +70,7 @@ interface Statistiken {
   laufende_erfassungen: number;
 }
 
-type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'export';
+type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'monat' | 'export';
 
 interface CurrentUser {
   id: number;
@@ -447,6 +448,10 @@ export default function TimeBookPage() {
           // Wochenansicht
           setActiveTab('woche');
           break;
+        case 'm':
+          // Monatsansicht
+          setActiveTab('monat');
+          break;
         case 'k':
           // Kunden
           setActiveTab('kunden');
@@ -721,7 +726,8 @@ export default function TimeBookPage() {
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'zeiterfassung', label: 'Zeiterfassung', icon: Clock },
-            { id: 'woche', label: 'Wochenansicht', icon: CalendarDays },
+            { id: 'woche', label: 'Woche', icon: CalendarDays },
+            { id: 'monat', label: 'Monat', icon: CalendarRange },
             { id: 'kunden', label: 'Kunden', icon: Users },
             { id: 'kategorien', label: 'Kategorien', icon: Tag },
             { id: 'eintraege', label: 'Einträge', icon: FileText },
@@ -792,6 +798,13 @@ export default function TimeBookPage() {
 
         {activeTab === 'woche' && (
           <WochenansichtTab
+            eintraege={eintraege}
+            onRefresh={loadData}
+          />
+        )}
+
+        {activeTab === 'monat' && (
+          <MonatsansichtTab
             eintraege={eintraege}
             onRefresh={loadData}
           />
@@ -1059,13 +1072,16 @@ function DashboardTab({
       </div>
 
       {/* Tastenkürzel Hinweis */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium">Tastenkürzel:</span>{' '}
-          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">N</kbd> Neue Erfassung •{' '}
-          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd> Timer stoppen •{' '}
-          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd> Dashboard •{' '}
-          <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> Einträge
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center flex flex-wrap justify-center gap-2">
+          <span className="font-medium">Tastenkürzel:</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">N</kbd> Neu</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd> Stopp</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd> Dashboard</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">W</kbd> Woche</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">M</kbd> Monat</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> Einträge</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd> Aktualisieren</span>
         </p>
       </div>
     </div>
@@ -2219,6 +2235,37 @@ function EintraegeTab({
     }
   };
 
+  const duplicateEintrag = async (eintrag: Zeiterfassung) => {
+    const heute = new Date().toISOString().split('T')[0];
+    const jetzt = new Date().toTimeString().slice(0, 5);
+
+    try {
+      const res = await fetch('/api/timebook/zeiterfassung', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kunde_id: eintrag.kunde_id,
+          titel: eintrag.titel,
+          beschreibung: eintrag.beschreibung,
+          start_datum: heute,
+          start_zeit: jetzt,
+          // Keine Endzeit - wird als laufend gestartet oder manuell eingetragen
+          ende_datum: null,
+          ende_zeit: null
+        })
+      });
+
+      if (res.ok) {
+        onRefresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Fehler beim Duplizieren');
+      }
+    } catch {
+      alert('Netzwerkfehler');
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header mit Suche */}
@@ -2477,6 +2524,13 @@ function EintraegeTab({
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => duplicateEintrag(eintrag)}
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Duplizieren (heute neu starten)"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => deleteEintrag(eintrag.id)}
                             className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Löschen"
@@ -2714,6 +2768,300 @@ function WochenansichtTab({
           <div className="text-right">
             <p className="text-sm opacity-80">Stunden</p>
             <p className="text-xl font-semibold">{(getWeekTotal() / 60).toFixed(1)} h</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Monatsansicht Tab
+function MonatsansichtTab({
+  eintraege,
+  onRefresh
+}: {
+  eintraege: Zeiterfassung[];
+  onRefresh: () => void;
+}) {
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
+
+  const getMonthData = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    // Erster Tag des Monats
+    const firstDay = new Date(year, month, 1);
+    // Letzter Tag des Monats
+    const lastDay = new Date(year, month + 1, 0);
+
+    // Wochentag des ersten Tages (0 = Sonntag)
+    let startDayOfWeek = firstDay.getDay();
+    // Konvertiere zu Montag-Start (0 = Montag)
+    startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+    // Tage des Vormonats die angezeigt werden
+    const prevMonthDays: Date[] = [];
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const date = new Date(year, month, -i);
+      prevMonthDays.push(date);
+    }
+
+    // Tage des aktuellen Monats
+    const currentMonthDays: Date[] = [];
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      currentMonthDays.push(new Date(year, month, i));
+    }
+
+    // Tage des nächsten Monats um auf 42 Tage (6 Wochen) zu kommen
+    const totalDays = prevMonthDays.length + currentMonthDays.length;
+    const nextMonthDays: Date[] = [];
+    const remaining = 42 - totalDays;
+    for (let i = 1; i <= remaining; i++) {
+      nextMonthDays.push(new Date(year, month + 1, i));
+    }
+
+    return { prevMonthDays, currentMonthDays, nextMonthDays };
+  };
+
+  const { prevMonthDays, currentMonthDays, nextMonthDays } = getMonthData();
+  const allDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
+
+  const previousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentMonth(new Date());
+  };
+
+  const getEintraegeForDay = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return eintraege.filter(e => e.start_datum === dateStr);
+  };
+
+  const getDayTotal = (date: Date): number => {
+    const dayEntries = getEintraegeForDay(date);
+    return dayEntries.reduce((sum, e) => {
+      if (!e.start_zeit || !e.ende_zeit) return sum;
+      const [sh, sm] = e.start_zeit.split(':').map(Number);
+      const [eh, em] = e.ende_zeit.split(':').map(Number);
+      let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+      if (diffMinutes < 0) diffMinutes += 24 * 60;
+      return sum + diffMinutes;
+    }, 0);
+  };
+
+  const getMonthTotal = (): number => {
+    return currentMonthDays.reduce((sum, day) => sum + getDayTotal(day), 0);
+  };
+
+  const formatMinutes = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const isToday = (date: Date): boolean => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isCurrentMonth = (date: Date): boolean => {
+    return date.getMonth() === currentMonth.getMonth();
+  };
+
+  const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+  // Berechne Stunden pro Woche des Monats
+  const getWeeklyBreakdown = () => {
+    const weeks: { start: Date; end: Date; minutes: number }[] = [];
+    let currentWeekStart: Date | null = null;
+    let currentWeekMinutes = 0;
+
+    currentMonthDays.forEach((day, index) => {
+      const dayOfWeek = day.getDay();
+      const isMonday = dayOfWeek === 1;
+      const isSunday = dayOfWeek === 0;
+      const isFirstDay = index === 0;
+      const isLastDay = index === currentMonthDays.length - 1;
+
+      if (isFirstDay || isMonday) {
+        if (currentWeekStart !== null) {
+          weeks.push({
+            start: currentWeekStart,
+            end: new Date(currentMonthDays[index - 1]),
+            minutes: currentWeekMinutes
+          });
+        }
+        currentWeekStart = day;
+        currentWeekMinutes = getDayTotal(day);
+      } else {
+        currentWeekMinutes += getDayTotal(day);
+      }
+
+      if (isLastDay && currentWeekStart) {
+        weeks.push({
+          start: currentWeekStart,
+          end: day,
+          minutes: currentWeekMinutes
+        });
+      }
+    });
+
+    return weeks;
+  };
+
+  const weeklyBreakdown = getWeeklyBreakdown();
+
+  return (
+    <div className="space-y-4">
+      {/* Header mit Navigation */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <CalendarRange className="w-5 h-5" />
+          Monatsansicht
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={previousMonth}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={goToToday}
+            className="px-3 py-1.5 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50"
+          >
+            Heute
+          </button>
+          <button
+            onClick={nextMonth}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Monatsname */}
+      <div className="text-center">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          {currentMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+        </h3>
+      </div>
+
+      {/* Kalender Grid */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Wochentags Header */}
+        <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700/50">
+          {dayNames.map(day => (
+            <div key={day} className="p-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Kalender Tage */}
+        <div className="grid grid-cols-7">
+          {allDays.map((day, index) => {
+            const dayEntries = getEintraegeForDay(day);
+            const dayTotal = getDayTotal(day);
+            const today = isToday(day);
+            const inCurrentMonth = isCurrentMonth(day);
+
+            return (
+              <div
+                key={index}
+                className={`min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 border-b border-r border-gray-100 dark:border-gray-700 ${
+                  !inCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : ''
+                } ${today ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+              >
+                {/* Tageszahl */}
+                <div className="flex items-center justify-between mb-1">
+                  <span
+                    className={`text-sm font-medium ${
+                      today
+                        ? 'w-6 h-6 flex items-center justify-center bg-indigo-600 text-white rounded-full'
+                        : inCurrentMonth
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-400 dark:text-gray-500'
+                    }`}
+                  >
+                    {day.getDate()}
+                  </span>
+                  {dayTotal > 0 && (
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      {formatMinutes(dayTotal)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Einträge (max 2) */}
+                <div className="space-y-0.5">
+                  {dayEntries.slice(0, 2).map(entry => (
+                    <div
+                      key={entry.id}
+                      className="text-xs p-1 rounded truncate"
+                      style={{
+                        backgroundColor: entry.kategorie_farbe ? `${entry.kategorie_farbe}20` : 'rgb(229 231 235)',
+                        borderLeft: `2px solid ${entry.kategorie_farbe || '#6366f1'}`
+                      }}
+                      title={`${entry.titel || entry.beschreibung} (${entry.kunde_name})`}
+                    >
+                      <span className="hidden sm:inline">{entry.titel || entry.beschreibung.slice(0, 12)}</span>
+                      <span className="sm:hidden">{entry.start_zeit?.slice(0, 5)}</span>
+                    </div>
+                  ))}
+                  {dayEntries.length > 2 && (
+                    <p className="text-xs text-gray-400 text-center">+{dayEntries.length - 2}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Wochen-Zusammenfassung */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Wochen-Übersicht</h3>
+        <div className="space-y-2">
+          {weeklyBreakdown.map((week, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                KW{Math.ceil((week.start.getDate() + new Date(week.start.getFullYear(), week.start.getMonth(), 1).getDay()) / 7)}:
+                {' '}{week.start.getDate()}.–{week.end.getDate()}.
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{ width: `${Math.min((week.minutes / (40 * 60)) * 100, 100)}%` }}
+                  />
+                </div>
+                <span className="text-sm font-mono font-medium text-gray-900 dark:text-white w-16 text-right">
+                  {formatMinutes(week.minutes)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Monatssumme */}
+      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-4 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-80">Monatssumme</p>
+            <p className="text-3xl font-bold">{formatMinutes(getMonthTotal())}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm opacity-80">Stunden</p>
+            <p className="text-xl font-semibold">{(getMonthTotal() / 60).toFixed(1)} h</p>
           </div>
         </div>
       </div>
