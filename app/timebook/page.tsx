@@ -10,7 +10,7 @@ import {
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
   Shield, Download, ChevronLeft, ChevronRight, CalendarDays,
   Star, Moon, Sun, Bell, BellOff, Zap, Filter, Keyboard,
-  Copy, CalendarRange, Euro, StickyNote
+  Copy, CalendarRange, Euro, StickyNote, PieChart, Pause, MessageSquare
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -48,6 +48,8 @@ interface Zeiterfassung {
   dauer_stunden: number | null;
   titel: string | null;
   beschreibung: string;
+  notizen: string | null;
+  stundensatz: number | null;
   abgeschlossen: boolean;
 }
 
@@ -70,7 +72,7 @@ interface Statistiken {
   laufende_erfassungen: number;
 }
 
-type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'monat' | 'export';
+type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'monat' | 'statistik' | 'export';
 
 interface CurrentUser {
   id: number;
@@ -452,6 +454,10 @@ export default function TimeBookPage() {
           // Monatsansicht
           setActiveTab('monat');
           break;
+        case 't':
+          // Statistik
+          setActiveTab('statistik');
+          break;
         case 'k':
           // Kunden
           setActiveTab('kunden');
@@ -728,6 +734,7 @@ export default function TimeBookPage() {
             { id: 'zeiterfassung', label: 'Zeiterfassung', icon: Clock },
             { id: 'woche', label: 'Woche', icon: CalendarDays },
             { id: 'monat', label: 'Monat', icon: CalendarRange },
+            { id: 'statistik', label: 'Statistik', icon: PieChart },
             { id: 'kunden', label: 'Kunden', icon: Users },
             { id: 'kategorien', label: 'Kategorien', icon: Tag },
             { id: 'eintraege', label: 'Einträge', icon: FileText },
@@ -807,6 +814,14 @@ export default function TimeBookPage() {
           <MonatsansichtTab
             eintraege={eintraege}
             onRefresh={loadData}
+          />
+        )}
+
+        {activeTab === 'statistik' && (
+          <StatistikTab
+            eintraege={eintraege}
+            kunden={kunden}
+            kategorien={kategorien}
           />
         )}
 
@@ -1080,8 +1095,9 @@ function DashboardTab({
           <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd> Dashboard</span>
           <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">W</kbd> Woche</span>
           <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">M</kbd> Monat</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">T</kbd> Statistik</span>
           <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> Einträge</span>
-          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd> Aktualisieren</span>
+          <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd> Refresh</span>
         </p>
       </div>
     </div>
@@ -2087,6 +2103,7 @@ function EintraegeTab({
     kunde_id: '',
     titel: '',
     beschreibung: '',
+    notizen: '',
     start_datum: '',
     start_zeit: '',
     ende_datum: '',
@@ -2162,6 +2179,7 @@ function EintraegeTab({
       kunde_id: eintrag.kunde_id,
       titel: eintrag.titel || '',
       beschreibung: eintrag.beschreibung,
+      notizen: eintrag.notizen || '',
       start_datum: eintrag.start_datum,
       start_zeit: eintrag.start_zeit?.slice(0, 5) || '',
       ende_datum: eintrag.ende_datum || eintrag.start_datum,
@@ -2194,6 +2212,7 @@ function EintraegeTab({
           kunde_id: editForm.kunde_id,
           titel: editForm.titel || null,
           beschreibung: editForm.beschreibung,
+          notizen: editForm.notizen || null,
           start_datum: editForm.start_datum,
           start_zeit: editForm.start_zeit,
           ende_datum: editForm.ende_zeit ? editForm.ende_datum : null,
@@ -2456,6 +2475,21 @@ function EintraegeTab({
                       </div>
                     </div>
 
+                    {/* Notizen */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        Notizen (optional)
+                      </label>
+                      <textarea
+                        value={editForm.notizen}
+                        onChange={e => setEditForm({ ...editForm, notizen: e.target.value })}
+                        placeholder="Zusätzliche Notizen, Anmerkungen..."
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-none"
+                      />
+                    </div>
+
                     <div className="flex gap-2">
                       <button
                         onClick={saveEdit}
@@ -2572,6 +2606,15 @@ function EintraegeTab({
                               {eintrag.abgeschlossen ? 'Abgeschlossen' : 'Läuft'}
                             </p>
                           </div>
+                          {eintrag.notizen && (
+                            <div className="col-span-2 sm:col-span-4">
+                              <p className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                Notizen
+                              </p>
+                              <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{eintrag.notizen}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -3062,6 +3105,263 @@ function MonatsansichtTab({
           <div className="text-right">
             <p className="text-sm opacity-80">Stunden</p>
             <p className="text-xl font-semibold">{(getMonthTotal() / 60).toFixed(1)} h</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Statistik Tab
+function StatistikTab({
+  eintraege,
+  kunden,
+  kategorien
+}: {
+  eintraege: Zeiterfassung[];
+  kunden: Kunde[];
+  kategorien: Kategorie[];
+}) {
+  const [zeitraum, setZeitraum] = useState<'woche' | 'monat' | 'jahr'>('monat');
+
+  // Berechne Zeitraum-Filter
+  const getFilteredEintraege = () => {
+    const heute = new Date();
+    let startDatum: Date;
+
+    switch (zeitraum) {
+      case 'woche':
+        startDatum = new Date(heute);
+        startDatum.setDate(heute.getDate() - 7);
+        break;
+      case 'monat':
+        startDatum = new Date(heute.getFullYear(), heute.getMonth(), 1);
+        break;
+      case 'jahr':
+        startDatum = new Date(heute.getFullYear(), 0, 1);
+        break;
+    }
+
+    const startStr = startDatum.toISOString().split('T')[0];
+    return eintraege.filter(e => e.start_datum >= startStr);
+  };
+
+  const filteredEintraege = getFilteredEintraege();
+
+  // Berechne Stunden für einen Eintrag
+  const getStunden = (e: Zeiterfassung): number => {
+    if (!e.start_zeit || !e.ende_zeit) return 0;
+    const [sh, sm] = e.start_zeit.split(':').map(Number);
+    const [eh, em] = e.ende_zeit.split(':').map(Number);
+    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    return diffMinutes / 60;
+  };
+
+  // Stunden pro Kategorie
+  const stundenProKategorie = kategorien.map(kat => {
+    const stunden = filteredEintraege
+      .filter(e => e.kategorie_bezeichnung === kat.bezeichnung)
+      .reduce((sum, e) => sum + getStunden(e), 0);
+    return { bezeichnung: kat.bezeichnung, farbe: kat.farbe, stunden };
+  }).filter(k => k.stunden > 0).sort((a, b) => b.stunden - a.stunden);
+
+  // Stunden pro Kunde
+  const stundenProKunde = kunden.map(kunde => {
+    const name = kunde.firmenname || `${kunde.ansprechperson_vorname} ${kunde.ansprechperson_nachname}`;
+    const stunden = filteredEintraege
+      .filter(e => e.kunde_id === kunde.id)
+      .reduce((sum, e) => sum + getStunden(e), 0);
+    return { name, stunden };
+  }).filter(k => k.stunden > 0).sort((a, b) => b.stunden - a.stunden).slice(0, 10);
+
+  // Stunden pro Wochentag
+  const stundenProWochentag = [0, 1, 2, 3, 4, 5, 6].map(tag => {
+    const tage = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const stunden = filteredEintraege
+      .filter(e => new Date(e.start_datum).getDay() === tag)
+      .reduce((sum, e) => sum + getStunden(e), 0);
+    return { tag: tage[tag], stunden };
+  });
+
+  // Sortiere Wochentage von Montag bis Sonntag
+  const wochentageSortiert = [...stundenProWochentag.slice(1), stundenProWochentag[0]];
+
+  // Gesamtstunden
+  const gesamtStunden = filteredEintraege.reduce((sum, e) => sum + getStunden(e), 0);
+
+  // Durchschnitt pro Tag
+  const tageImZeitraum = zeitraum === 'woche' ? 7 : zeitraum === 'monat' ? 30 : 365;
+  const durchschnittProTag = gesamtStunden / tageImZeitraum;
+
+  // Anzahl aktive Tage
+  const aktiveTage = new Set(filteredEintraege.map(e => e.start_datum)).size;
+
+  // Max für Balkendiagramme
+  const maxKategorieStunden = stundenProKategorie.length > 0 ? stundenProKategorie[0].stunden : 1;
+  const maxKundeStunden = stundenProKunde.length > 0 ? stundenProKunde[0].stunden : 1;
+  const maxWochentagStunden = Math.max(...wochentageSortiert.map(w => w.stunden), 1);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <PieChart className="w-5 h-5" />
+          Statistiken
+        </h2>
+        <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+          {(['woche', 'monat', 'jahr'] as const).map(z => (
+            <button
+              key={z}
+              onClick={() => setZeitraum(z)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                zeitraum === z
+                  ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              {z === 'woche' ? 'Woche' : z === 'monat' ? 'Monat' : 'Jahr'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Übersichtskarten */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Gesamtstunden</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{gesamtStunden.toFixed(1)} h</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Einträge</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredEintraege.length}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Aktive Tage</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{aktiveTage}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Ø pro Tag</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{durchschnittProTag.toFixed(1)} h</p>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Stunden pro Kategorie */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Tag className="w-5 h-5 text-indigo-600" />
+            Stunden pro Kategorie
+          </h3>
+          {stundenProKategorie.length === 0 ? (
+            <p className="text-gray-500 text-sm">Keine Daten im Zeitraum</p>
+          ) : (
+            <div className="space-y-3">
+              {stundenProKategorie.map((kat, index) => (
+                <div key={index}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      {kat.farbe && (
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: kat.farbe }} />
+                      )}
+                      {kat.bezeichnung}
+                    </span>
+                    <span className="font-mono text-gray-600 dark:text-gray-400">{kat.stunden.toFixed(1)} h</span>
+                  </div>
+                  <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${(kat.stunden / maxKategorieStunden) * 100}%`,
+                        backgroundColor: kat.farbe || '#6366f1'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Stunden pro Kunde */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-600" />
+            Stunden pro Kunde (Top 10)
+          </h3>
+          {stundenProKunde.length === 0 ? (
+            <p className="text-gray-500 text-sm">Keine Daten im Zeitraum</p>
+          ) : (
+            <div className="space-y-3">
+              {stundenProKunde.map((kunde, index) => (
+                <div key={index}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700 dark:text-gray-300 truncate max-w-[180px]">{kunde.name}</span>
+                    <span className="font-mono text-gray-600 dark:text-gray-400">{kunde.stunden.toFixed(1)} h</span>
+                  </div>
+                  <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-blue-500 transition-all"
+                      style={{ width: `${(kunde.stunden / maxKundeStunden) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Stunden pro Wochentag */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-green-600" />
+            Verteilung nach Wochentag
+          </h3>
+          <div className="flex items-end justify-between gap-2 h-40">
+            {wochentageSortiert.map((wt, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center">
+                <div className="w-full flex-1 flex items-end">
+                  <div
+                    className={`w-full rounded-t-lg transition-all ${
+                      wt.stunden === Math.max(...wochentageSortiert.map(w => w.stunden))
+                        ? 'bg-green-500'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                    style={{
+                      height: `${maxWochentagStunden > 0 ? (wt.stunden / maxWochentagStunden) * 100 : 0}%`,
+                      minHeight: wt.stunden > 0 ? '8px' : '0'
+                    }}
+                  />
+                </div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2">{wt.tag}</p>
+                <p className="text-xs text-gray-500">{wt.stunden.toFixed(1)}h</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Produktivitäts-Score */}
+      <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold opacity-90">Produktivitäts-Übersicht</h3>
+            <p className="text-3xl font-bold mt-2">
+              {aktiveTage > 0 ? (gesamtStunden / aktiveTage).toFixed(1) : 0} h
+            </p>
+            <p className="text-sm opacity-80">Durchschnitt pro aktivem Tag</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm opacity-80">Produktivste Kategorie</p>
+            <p className="text-xl font-semibold">
+              {stundenProKategorie.length > 0 ? stundenProKategorie[0].bezeichnung : '-'}
+            </p>
+            <p className="text-sm opacity-80 mt-2">Top Kunde</p>
+            <p className="text-xl font-semibold">
+              {stundenProKunde.length > 0 ? stundenProKunde[0].name.slice(0, 20) : '-'}
+            </p>
           </div>
         </div>
       </div>
