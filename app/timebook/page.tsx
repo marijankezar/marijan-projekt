@@ -10,7 +10,8 @@ import {
   StopCircle, PlayCircle, LogOut, User, Tag, Palette, Save, Search,
   Shield, Download, ChevronLeft, ChevronRight, CalendarDays,
   Star, Moon, Sun, Bell, BellOff, Zap, Filter, Keyboard,
-  Copy, CalendarRange, Euro, StickyNote, PieChart, Pause, MessageSquare
+  Copy, CalendarRange, Euro, StickyNote, PieChart, Pause, MessageSquare,
+  Receipt, Printer, Send, CheckCircle, XCircle, DollarSign
 } from 'lucide-react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
@@ -72,7 +73,7 @@ interface Statistiken {
   laufende_erfassungen: number;
 }
 
-type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'monat' | 'statistik' | 'export';
+type ActiveTab = 'dashboard' | 'zeiterfassung' | 'kunden' | 'eintraege' | 'kategorien' | 'woche' | 'monat' | 'statistik' | 'rechnungen' | 'export';
 
 interface CurrentUser {
   id: number;
@@ -735,6 +736,7 @@ export default function TimeBookPage() {
             { id: 'woche', label: 'Woche', icon: CalendarDays },
             { id: 'monat', label: 'Monat', icon: CalendarRange },
             { id: 'statistik', label: 'Statistik', icon: PieChart },
+            { id: 'rechnungen', label: 'Rechnungen', icon: Receipt },
             { id: 'kunden', label: 'Kunden', icon: Users },
             { id: 'kategorien', label: 'Kategorien', icon: Tag },
             { id: 'eintraege', label: 'Einträge', icon: FileText },
@@ -822,6 +824,15 @@ export default function TimeBookPage() {
             eintraege={eintraege}
             kunden={kunden}
             kategorien={kategorien}
+          />
+        )}
+
+        {activeTab === 'rechnungen' && (
+          <RechnungenTab
+            eintraege={eintraege}
+            kunden={kunden}
+            kategorien={kategorien}
+            onRefresh={loadData}
           />
         )}
 
@@ -3365,6 +3376,385 @@ function StatistikTab({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Rechnungen Tab
+function RechnungenTab({
+  eintraege,
+  kunden,
+  kategorien,
+  onRefresh
+}: {
+  eintraege: Zeiterfassung[];
+  kunden: Kunde[];
+  kategorien: Kategorie[];
+  onRefresh: () => void;
+}) {
+  const [selectedKunde, setSelectedKunde] = useState<string>('');
+  const [dateVon, setDateVon] = useState(() => {
+    const date = new Date();
+    date.setDate(1);
+    return date.toISOString().split('T')[0];
+  });
+  const [dateBis, setDateBis] = useState(() => new Date().toISOString().split('T')[0]);
+  const [stundensatz, setStundensatz] = useState<number>(80);
+  const [showPreview, setShowPreview] = useState(false);
+  const [rechnungsnummer, setRechnungsnummer] = useState(() => {
+    const now = new Date();
+    return `R-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-001`;
+  });
+
+  // Berechne Stunden für einen Eintrag
+  const getStunden = (e: Zeiterfassung): number => {
+    if (!e.start_zeit || !e.ende_zeit) return 0;
+    const [sh, sm] = e.start_zeit.split(':').map(Number);
+    const [eh, em] = e.ende_zeit.split(':').map(Number);
+    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    return diffMinutes / 60;
+  };
+
+  // Gefilterte Einträge für Rechnung
+  const rechnungsEintraege = eintraege.filter(e => {
+    if (!selectedKunde) return false;
+    if (e.kunde_id !== selectedKunde) return false;
+    if (e.start_datum < dateVon || e.start_datum > dateBis) return false;
+    if (!e.ende_zeit) return false; // Nur abgeschlossene Einträge
+    return true;
+  });
+
+  // Berechne Gesamtstunden und Betrag
+  const gesamtStunden = rechnungsEintraege.reduce((sum, e) => sum + getStunden(e), 0);
+  const gesamtBetrag = gesamtStunden * stundensatz;
+  const mwst = gesamtBetrag * 0.20; // 20% MwSt
+  const gesamtMitMwst = gesamtBetrag + mwst;
+
+  // Kunde-Infos
+  const selectedKundeInfo = kunden.find(k => k.id === selectedKunde);
+
+  // Drucken
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <Receipt className="w-5 h-5" />
+          Rechnungen erstellen
+        </h2>
+      </div>
+
+      {/* Filter */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="font-medium text-gray-900 dark:text-white mb-4">Rechnungsdetails</h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Kunde *
+            </label>
+            <select
+              value={selectedKunde}
+              onChange={(e) => setSelectedKunde(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            >
+              <option value="">Kunde auswählen...</option>
+              {kunden.map(k => (
+                <option key={k.id} value={k.id}>
+                  {k.firmenname || `${k.ansprechperson_vorname} ${k.ansprechperson_nachname}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Von Datum
+            </label>
+            <input
+              type="date"
+              value={dateVon}
+              onChange={(e) => setDateVon(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Bis Datum
+            </label>
+            <input
+              type="date"
+              value={dateBis}
+              onChange={(e) => setDateBis(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Stundensatz (€)
+            </label>
+            <input
+              type="number"
+              value={stundensatz}
+              onChange={(e) => setStundensatz(Number(e.target.value))}
+              min="0"
+              step="5"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Rechnungsnummer
+            </label>
+            <input
+              type="text"
+              value={rechnungsnummer}
+              onChange={(e) => setRechnungsnummer(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Zusammenfassung */}
+      {selectedKunde && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm opacity-80">Einträge</p>
+              <p className="text-2xl font-bold">{rechnungsEintraege.length}</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-80">Stunden</p>
+              <p className="text-2xl font-bold">{gesamtStunden.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-80">Netto</p>
+              <p className="text-2xl font-bold">€ {gesamtBetrag.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-80">Brutto (inkl. 20% MwSt)</p>
+              <p className="text-2xl font-bold">€ {gesamtMitMwst.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Einträge-Liste */}
+      {selectedKunde && rechnungsEintraege.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 className="font-medium text-gray-900 dark:text-white">
+              Einträge ({rechnungsEintraege.length})
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 text-sm"
+              >
+                <FileText className="w-4 h-4" />
+                {showPreview ? 'Liste' : 'Vorschau'}
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+              >
+                <Printer className="w-4 h-4" />
+                Drucken
+              </button>
+            </div>
+          </div>
+
+          {!showPreview ? (
+            // Tabellen-Ansicht
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-400">Datum</th>
+                    <th className="px-4 py-3 text-left text-gray-600 dark:text-gray-400">Beschreibung</th>
+                    <th className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">Stunden</th>
+                    <th className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">Betrag</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {rechnungsEintraege.map(e => {
+                    const stunden = getStunden(e);
+                    const betrag = stunden * stundensatz;
+                    return (
+                      <tr key={e.id}>
+                        <td className="px-4 py-3 text-gray-900 dark:text-white">{e.start_datum}</td>
+                        <td className="px-4 py-3 text-gray-900 dark:text-white">
+                          {e.titel || e.beschreibung}
+                          {e.kategorie_bezeichnung && (
+                            <span className="ml-2 text-xs text-gray-500">({e.kategorie_bezeichnung})</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-mono">
+                          {stunden.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-mono">
+                          € {betrag.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="bg-gray-50 dark:bg-gray-700/50 font-semibold">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-gray-900 dark:text-white">Summe Netto</td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-mono">{gesamtStunden.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-mono">€ {gesamtBetrag.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-gray-600 dark:text-gray-400">+ 20% MwSt</td>
+                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400 font-mono">€ {mwst.toFixed(2)}</td>
+                  </tr>
+                  <tr className="text-lg">
+                    <td colSpan={3} className="px-4 py-3 text-gray-900 dark:text-white">Gesamtbetrag</td>
+                    <td className="px-4 py-3 text-right text-green-600 dark:text-green-400 font-mono">€ {gesamtMitMwst.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            // Rechnungs-Vorschau (Druckansicht)
+            <div className="p-8 print:p-0" id="rechnung-preview">
+              <div className="max-w-2xl mx-auto bg-white text-black print:shadow-none">
+                {/* Rechnungskopf */}
+                <div className="border-b-2 border-gray-300 pb-6 mb-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900">RECHNUNG</h1>
+                      <p className="text-gray-600 mt-1">Nr. {rechnungsnummer}</p>
+                      <p className="text-gray-600">Datum: {new Date().toLocaleDateString('de-DE')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">Ihr Unternehmen</p>
+                      <p className="text-gray-600 text-sm">Musterstraße 1</p>
+                      <p className="text-gray-600 text-sm">1010 Wien</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kundenadresse */}
+                <div className="mb-8">
+                  <p className="text-sm text-gray-500 mb-1">Rechnung an:</p>
+                  <p className="font-semibold text-gray-900">
+                    {selectedKundeInfo?.firmenname || `${selectedKundeInfo?.ansprechperson_vorname} ${selectedKundeInfo?.ansprechperson_nachname}`}
+                  </p>
+                  {selectedKundeInfo?.email && (
+                    <p className="text-gray-600 text-sm">{selectedKundeInfo.email}</p>
+                  )}
+                </div>
+
+                {/* Leistungszeitraum */}
+                <div className="mb-6">
+                  <p className="text-gray-600">
+                    Leistungszeitraum: {new Date(dateVon).toLocaleDateString('de-DE')} bis {new Date(dateBis).toLocaleDateString('de-DE')}
+                  </p>
+                </div>
+
+                {/* Positionen */}
+                <table className="w-full text-sm mb-8">
+                  <thead>
+                    <tr className="border-b-2 border-gray-300">
+                      <th className="py-2 text-left text-gray-900">Datum</th>
+                      <th className="py-2 text-left text-gray-900">Beschreibung</th>
+                      <th className="py-2 text-right text-gray-900">Stunden</th>
+                      <th className="py-2 text-right text-gray-900">Betrag</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rechnungsEintraege.map(e => {
+                      const stunden = getStunden(e);
+                      const betrag = stunden * stundensatz;
+                      return (
+                        <tr key={e.id} className="border-b border-gray-200">
+                          <td className="py-2 text-gray-700">{new Date(e.start_datum).toLocaleDateString('de-DE')}</td>
+                          <td className="py-2 text-gray-700">{e.titel || e.beschreibung}</td>
+                          <td className="py-2 text-right text-gray-700">{stunden.toFixed(2)}</td>
+                          <td className="py-2 text-right text-gray-700">€ {betrag.toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Summen */}
+                <div className="border-t-2 border-gray-300 pt-4">
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-600">Summe Netto ({gesamtStunden.toFixed(2)} h × € {stundensatz})</span>
+                    <span className="text-gray-900">€ {gesamtBetrag.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-600">+ 20% MwSt</span>
+                    <span className="text-gray-900">€ {mwst.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 text-lg font-bold border-t border-gray-300 mt-2">
+                    <span className="text-gray-900">Gesamtbetrag</span>
+                    <span className="text-gray-900">€ {gesamtMitMwst.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Zahlungsinformationen */}
+                <div className="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-600">
+                  <p>Bitte überweisen Sie den Betrag innerhalb von 14 Tagen auf folgendes Konto:</p>
+                  <p className="mt-2"><strong>IBAN:</strong> AT00 0000 0000 0000 0000</p>
+                  <p><strong>BIC:</strong> ABCDATWW</p>
+                  <p className="mt-4">Vielen Dank für Ihren Auftrag!</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedKunde && rechnungsEintraege.length === 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-center">
+          <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+          <p className="text-yellow-700 dark:text-yellow-400">
+            Keine abgeschlossenen Einträge für diesen Kunden im gewählten Zeitraum gefunden.
+          </p>
+        </div>
+      )}
+
+      {!selectedKunde && (
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-8 text-center">
+          <Receipt className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400">
+            Wähle einen Kunden aus, um eine Rechnung zu erstellen.
+          </p>
+        </div>
+      )}
+
+      {/* Print Styles */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #rechnung-preview, #rechnung-preview * {
+            visibility: visible;
+          }
+          #rechnung-preview {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

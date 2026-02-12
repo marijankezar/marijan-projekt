@@ -201,7 +201,7 @@ export default function BirthdayPage() {
        {/*  <h1 className={styles.title}>Alles Gute zum Geburtstag</h1> */}
         <h1 className={styles.title}>Vse najboljše za rojstni dan!</h1>
 
-        <h2 className={styles.name}>Emanuel</h2>
+        <h2 className={styles.name}>Tomi</h2>
 
         <div className={styles.decorations}>
           <span className={styles.balloon}>🎈</span>
@@ -213,15 +213,18 @@ export default function BirthdayPage() {
 
         <div className={styles.message}>
           
-🌟 Dragi Emanuel! 🎉🎂
+🌟 Dragi Tomi, 🎉🎂
 
-Vse najboljše za rojstni dan!  
-Želim ti veliko zdravja, sreče in uspehov –  
-tako v življenju kot tudi v svetu IT-ja, kjer si pravi mojster. 💻😄  
 
-Naj ti nikoli ne zmanjka dobrih idej, stabilnih sistemov  
-in časa za vse, kar te veseli.  
-Uživaj svoj poseben dan! 🌟
+
+iskrene čestitke ob tvojem 40. rojstnem dnevu! 🎉
+Želim ti lep dan v krogu tvoje čudovite družine – žene in treh otrok.
+
+Zame si odličen sodelavec in zelo cenim najino dolgoletno in uspešno sodelovanje. Poleg dela pa si tudi izjemen glasbenik (bas kitara, klavir in še več) ter pravi mojster koktajlov 🍸.
+
+Vse najboljše, veliko zdravja, sreče in uspeha – ostani takšen, kot si!
+
+Lep pozdrav
 
         </div>
 

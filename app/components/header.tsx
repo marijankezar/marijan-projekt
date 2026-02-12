@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import {
-  Home, LogIn, Cake, Music, Clock, Menu, X, ChevronDown,
-  ExternalLink
+  Home, LogIn, Cake, Music, Clock, Menu, X, Warehouse, CalendarDays
 } from "lucide-react";
 
 // ============================================
@@ -25,21 +24,21 @@ const navigationItems: NavItem[] = [
   { href: "/birthday", label: "Birthday", icon: Cake },
   { href: "/songs", label: "Pesmi", icon: Music },
   { href: "/timebook", label: "TimeBook", icon: Clock },
+  { href: "/elsbacher", label: "ELRO", icon: Warehouse },
+  { href: "/termine", label: "Termine", icon: CalendarDays },
   // Neue Links hier hinzufügen:
   // { href: "/neuer-link", label: "Neuer Link", icon: SomeIcon },
 ];
 
 export default function MyHeder() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Schließe Menü wenn außerhalb geklickt wird
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMobileMenuOpen(false);
-        setActiveDropdown(null);
+        setMenuOpen(false);
       }
     };
 
@@ -47,52 +46,17 @@ export default function MyHeder() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Schließe mobile Menü bei Escape
+  // Schließe Menü bei Escape
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setMobileMenuOpen(false);
-        setActiveDropdown(null);
+        setMenuOpen(false);
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
-
-  const NavLink = ({ item, mobile = false }: { item: NavItem; mobile?: boolean }) => {
-    const Icon = item.icon;
-    const baseClasses = mobile
-      ? "flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all rounded-lg"
-      : "flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all rounded-lg text-sm";
-
-    if (item.external) {
-      return (
-        <a
-          href={item.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={baseClasses}
-          onClick={() => mobile && setMobileMenuOpen(false)}
-        >
-          <Icon className="w-4 h-4" />
-          <span>{item.label}</span>
-          <ExternalLink className="w-3 h-3 opacity-50" />
-        </a>
-      );
-    }
-
-    return (
-      <Link
-        href={item.href}
-        className={baseClasses}
-        onClick={() => mobile && setMobileMenuOpen(false)}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{item.label}</span>
-      </Link>
-    );
-  };
 
   return (
     <header ref={menuRef} className="bg-white dark:bg-black text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
@@ -106,47 +70,40 @@ export default function MyHeder() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-12">
 
-          {/* Mobile: Hamburger Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Menü öffnen"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
-
-          {/* Desktop: Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navigationItems.map((item) => (
-              item.children ? (
-                // Dropdown-Menü für Items mit Untermenüs
-                <div key={item.href} className="relative">
-                  <button
-                    onClick={() => setActiveDropdown(activeDropdown === item.href ? null : item.href)}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all rounded-lg text-sm"
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === item.href ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {activeDropdown === item.href && (
-                    <div className="absolute top-full left-0 mt-1 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg min-w-48 z-50">
-                      {item.children.map((child) => (
-                        <NavLink key={child.href} item={child} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+          {/* Hamburger Button - funktioniert auf allen Bildschirmgrößen */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Menü öffnen"
+            >
+              {menuOpen ? (
+                <X className="w-6 h-6" />
               ) : (
-                <NavLink key={item.href} item={item} />
-              )
-            ))}
-          </nav>
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+
+            {/* Dropdown Menü - erscheint direkt unter dem Button */}
+            {menuOpen && (
+              <div className="absolute top-full left-0 mt-2 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl min-w-56 z-50">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Mitte: kezar.at Logo */}
           <a
@@ -163,39 +120,6 @@ export default function MyHeder() {
         </div>
       </div>
 
-      {/* Mobile: Dropdown Menü */}
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50">
-          <nav className="max-w-7xl mx-auto px-4 py-3 space-y-1">
-            {navigationItems.map((item) => (
-              item.children ? (
-                <div key={item.href}>
-                  <button
-                    onClick={() => setActiveDropdown(activeDropdown === item.href ? null : item.href)}
-                    className="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.label}</span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === item.href ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {activeDropdown === item.href && (
-                    <div className="ml-6 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-                      {item.children.map((child) => (
-                        <NavLink key={child.href} item={child} mobile />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <NavLink key={item.href} item={item} mobile />
-              )
-            ))}
-          </nav>
-        </div>
-      )}
 
       {/* Untere Linie */}
       <div className="animated-line-wrapper mt-0.5">
