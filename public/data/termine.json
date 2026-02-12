@@ -1,0 +1,453 @@
+{
+  "meta": {
+    "titel": "Vinko Poljanec",
+    "untertitel": "Koncerti in Prireditve",
+    "autor": "Marijan Kežar, BSc"
+  },
+  "termine": [
+    {
+      "id": 1,
+      "titel": "Novoletno srečanje",
+      "datum": "2025-01-10",
+      "datumText": "10. januar 2025",
+      "ort": "pri Waldwirt",
+      "zeit": "19:00",
+      "jahr": 2025
+    },
+    {
+      "id": 2,
+      "titel": "Molitvena ura za pokojnega Joheja Skof",
+      "datum": "2025-02-14",
+      "datumText": "14. februar 2025",
+      "ort": "Stara Cerkev v Šent Primožu",
+      "zeit": "19:00",
+      "beschreibung": "Petje pri molitveni uri",
+      "jahr": 2025
+    },
+    {
+      "id": 3,
+      "titel": "Koroška poje",
+      "datum": "2025-03-09",
+      "datumText": "9. marec 2025",
+      "ort": "Celovec, Dom glasbe",
+      "zeit": "13:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2025
+    },
+    {
+      "id": 4,
+      "titel": "Seminarske Vaje",
+      "datum": "2025-03-16",
+      "datumText": "16. marec 2025",
+      "ort": "Kulturni Dom Šentprimož",
+      "zeit": "10:30",
+      "jahr": 2025
+    },
+    {
+      "id": 5,
+      "titel": "Geographische Namen und Grundsätze ihrer Standardisierung",
+      "datum": "2025-04-01",
+      "datumText": "1. april 2025",
+      "ort": "Šentprimož, Kulturni dom Danica",
+      "zeit": "19:30",
+      "beschreibung": "Predavanje: Peter Jordan",
+      "jahr": 2025
+    },
+    {
+      "id": 6,
+      "titel": "Sv. maša obletnica Leo Sturm",
+      "datum": "2025-04-21",
+      "datumText": "21. april 2025",
+      "ort": "Škocjan",
+      "zeit": "09:30",
+      "jahr": 2025
+    },
+    {
+      "id": 7,
+      "titel": "Vigredni Koncert",
+      "datum": "2025-04-26",
+      "datumText": "26. april 2025",
+      "ort": "Škocjan, K3",
+      "zeit": "20:00",
+      "beschreibung": "Oktakord, Tomaž Boskin, Kvartet Nomos, MoPZ Vinko Poljanec",
+      "jahr": 2025
+    },
+    {
+      "id": 8,
+      "titel": "Izlet in poroka v Herzogenburgu",
+      "datum": "2025-05-17",
+      "datumText": "17. maj 2025",
+      "ort": "Nižja Avstrija, Stift Herzogenburg",
+      "zeit": "13:00",
+      "jahr": 2025
+    },
+    {
+      "id": 9,
+      "titel": "Radevent",
+      "datum": "2025-05-21",
+      "datumText": "21. maj 2025",
+      "ort": "K3 v Škoncjanu",
+      "zeit": "18:00",
+      "jahr": 2025
+    },
+    {
+      "id": 10,
+      "titel": "Kirchhofsingen",
+      "datum": "2025-06-28",
+      "datumText": "28. junij 2025",
+      "ort": "Kamen v Podjuni",
+      "zeit": "10:00",
+      "jahr": 2025
+    },
+    {
+      "id": 11,
+      "titel": "Poletni večer",
+      "datum": "2025-07-26",
+      "datumText": "26. julij 2025",
+      "ort": "Šentprimož, Kulturni dom Danica",
+      "zeit": "18:00",
+      "beschreibung": "SPD Vinko Poljanec",
+      "jahr": 2025
+    },
+    {
+      "id": 12,
+      "titel": "Kulturni tandem",
+      "datum": "2025-10-21",
+      "datumText": "21. oktober 2025",
+      "ort": "Celovec, Deželni arhiv",
+      "zeit": "19:00",
+      "jahr": 2025
+    },
+    {
+      "id": 13,
+      "titel": "Seminarske vaje",
+      "datum": "2025-03-01",
+      "datumText": "1. marec 2025",
+      "ort": "Kulturni Dom Šentprimož",
+      "zeit": "10:30",
+      "jahr": 2025
+    },
+    {
+      "id": 14,
+      "titel": "Pogreb Deutschmann",
+      "datum": "2025-09-20",
+      "datumText": "20. september 2025",
+      "ort": "Kamen",
+      "jahr": 2025
+    },
+    {
+      "id": 15,
+      "titel": "Unikum \u201EOb vodi\u201C",
+      "datum": "2025-11-08",
+      "datumText": "8. november 2025",
+      "ort": "Turnersee, Gasthaus Picey",
+      "zeit": "14:00",
+      "jahr": 2025
+    },
+    {
+      "id": 16,
+      "titel": "Novoletno srečanje",
+      "datum": "2026-01-09",
+      "datumText": "9. januar 2026",
+      "ort": "Fichtenhof",
+      "zeit": "19:00",
+      "jahr": 2026
+    },
+    {
+      "id": 17,
+      "titel": "Občni zbor",
+      "datum": "2026-01-29",
+      "datumText": "29. januar 2026",
+      "ort": "K3 Škocjan",
+      "zeit": "19:00",
+      "jahr": 2026
+    },
+    {
+      "id": 18,
+      "titel": "Vigredni koncert",
+      "datum": "2026-04-18",
+      "datumText": "18. april 2026",
+      "ort": "K3 Škocjan",
+      "zeit": "20:00",
+      "jahr": 2026
+    },
+    {
+      "id": 101,
+      "titel": "Pogreb A.P.",
+      "datum": "2024-01-11",
+      "datumText": "11. januar 2024",
+      "ort": "Škocjan",
+      "zeit": "14:00",
+      "jahr": 2024
+    },
+    {
+      "id": 102,
+      "titel": "Novoletno srečanje",
+      "datum": "2024-01-12",
+      "datumText": "12. januar 2024",
+      "ort": "pri Grinzing",
+      "zeit": "19:00",
+      "jahr": 2024
+    },
+    {
+      "id": 103,
+      "titel": "Podelitev Tischlerjeve nagrade Karlu Smolleju",
+      "datum": "2024-01-22",
+      "datumText": "22. januar 2024",
+      "ort": "Celovec, Tischlerjeva dvorana",
+      "zeit": "19:00",
+      "jahr": 2024
+    },
+    {
+      "id": 104,
+      "titel": "Seminarske Vaje",
+      "datum": "2024-02-25",
+      "datumText": "25. februar 2024",
+      "ort": "Kulturni Dom Šentprimož",
+      "zeit": "10:30",
+      "jahr": 2024
+    },
+    {
+      "id": 105,
+      "titel": "Pogreb A.P.",
+      "datum": "2024-03-06",
+      "datumText": "6. marec 2024",
+      "ort": "Škocjan",
+      "zeit": "11:00",
+      "jahr": 2024
+    },
+    {
+      "id": 106,
+      "titel": "Vigredni Koncert",
+      "datum": "2024-04-13",
+      "datumText": "13. april 2024",
+      "ort": "Škocjan, K3",
+      "zeit": "20:00",
+      "beschreibung": "VS Lipa, Quartett Oisternix, Kvartet Nomos, MoPZ Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 107,
+      "titel": "Srečanje otroških in mladinskih zborov",
+      "datum": "2024-04-14",
+      "datumText": "14. april 2024",
+      "ort": "Škocjan, K3",
+      "zeit": "15:00",
+      "beschreibung": "Soprireditelj SPD Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 108,
+      "titel": "Podelitev Kugyjeve nagrade Franzu Starzu",
+      "datum": "2024-04-25",
+      "datumText": "25. april 2024",
+      "ort": "Žamanje, Gostilna Picey",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 109,
+      "titel": "Pogreb E.R.",
+      "datum": "2024-05-09",
+      "datumText": "9. maj 2024",
+      "ort": "Škocjan",
+      "zeit": "14:00",
+      "jahr": 2024
+    },
+    {
+      "id": 110,
+      "titel": "Wildensteiner Wasserfallfest",
+      "datum": "2024-06-09",
+      "datumText": "9. junij 2024",
+      "ort": "Galicija, Podkanja vas",
+      "zeit": "11:00",
+      "jahr": 2024
+    },
+    {
+      "id": 111,
+      "titel": "Jubilejni koncert PD Lipa",
+      "datum": "2024-06-15",
+      "datumText": "15. junij 2024",
+      "ort": "Grebinjski Klošter, farna cerkev",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 112,
+      "titel": "Kmečki praznik",
+      "datum": "2024-06-30",
+      "datumText": "30. junij 2024",
+      "ort": "Galicija",
+      "zeit": "11:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 113,
+      "titel": "Matej 30. letnica",
+      "datum": "2024-07-14",
+      "datumText": "14. julij 2024",
+      "ort": "",
+      "zeit": "19:00",
+      "beschreibung": "Praznovanje 30. obletnice",
+      "jahr": 2024
+    },
+    {
+      "id": 114,
+      "titel": "Poletni večer",
+      "datum": "2024-07-27",
+      "datumText": "27. julij 2024",
+      "ort": "Šentprimož, Kulturni dom Danica",
+      "zeit": "19:00",
+      "beschreibung": "SPD Vinko Poljanec",
+      "jahr": 2024
+    },
+    {
+      "id": 115,
+      "titel": "Horsti 50. letnica",
+      "datum": "2024-08-03",
+      "datumText": "3. avgust 2024",
+      "ort": "pri Grinzing",
+      "zeit": "12:00",
+      "beschreibung": "Praznovanje 50. obletnice",
+      "jahr": 2024
+    },
+    {
+      "id": 116,
+      "titel": "Niko 30. letnica",
+      "datum": "2024-09-09",
+      "datumText": "9. september 2024",
+      "ort": "pri Nikot Vesile",
+      "zeit": "17:00",
+      "beschreibung": "Praznovanje 30. obletnice",
+      "jahr": 2024
+    },
+    {
+      "id": 117,
+      "titel": "Društveni izlet",
+      "datum": "2024-10-05",
+      "datumText": "5. oktober 2024",
+      "ort": "Admont in Kulm",
+      "zeit": "06:00",
+      "jahr": 2024
+    },
+    {
+      "id": 118,
+      "titel": "Dan starih v občini Škocjan",
+      "datum": "2024-11-09",
+      "datumText": "9. november 2024",
+      "ort": "Škocjan, K3",
+      "zeit": "15:00",
+      "jahr": 2024
+    },
+    {
+      "id": 201,
+      "titel": "Novoletni koncert",
+      "datum": "2023-01-06",
+      "datumText": "6. januar 2023",
+      "ort": "Šentprimož, Kulturni dom",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2023
+    },
+    {
+      "id": 202,
+      "titel": "Redni občni zbor SPD Vinko Poljanec",
+      "datum": "2023-01-13",
+      "datumText": "13. januar 2023",
+      "ort": "Žamanje, Gostilna Picey",
+      "zeit": "19:00",
+      "jahr": 2023
+    },
+    {
+      "id": 203,
+      "titel": "100 let K.D. Kajuh",
+      "datum": "2023-02-25",
+      "datumText": "25. februar 2023",
+      "ort": "Pliberk, Kulturni dom",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2023
+    },
+    {
+      "id": 204,
+      "titel": "Vigredni koncert",
+      "datum": "2023-04-22",
+      "datumText": "22. april 2023",
+      "ort": "Škocjan, K3",
+      "zeit": "20:00",
+      "beschreibung": "MePZ Danica, Kvartet Nomos, MoPZ Vinko Poljanec",
+      "jahr": 2023
+    },
+    {
+      "id": 205,
+      "titel": "Poletni večer",
+      "datum": "2023-07-29",
+      "datumText": "29. julij 2023",
+      "ort": "Šentprimož, Kulturni dom",
+      "zeit": "19:00",
+      "beschreibung": "SPD Vinko Poljanec",
+      "jahr": 2023
+    },
+    {
+      "id": 206,
+      "titel": "Spominska maša ob 85. obletnici smrti Vinka Poljanca",
+      "datum": "2023-08-25",
+      "datumText": "25. avgust 2023",
+      "ort": "Škocjan, farna cerkev",
+      "zeit": "10:00",
+      "jahr": 2023
+    },
+    {
+      "id": 207,
+      "titel": "20. obletnica partnerske pogodbe",
+      "datum": "2023-09-17",
+      "datumText": "17. september 2023",
+      "ort": "Škocjan, K3",
+      "zeit": "15:00",
+      "beschreibung": "Občini Škocjan in San Canzian d'Isonzo",
+      "jahr": 2023
+    },
+    {
+      "id": 208,
+      "titel": "Dober večer, sosed",
+      "datum": "2023-10-21",
+      "datumText": "21. oktober 2023",
+      "ort": "Dobrla vas, Kulturni dom",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2023
+    },
+    {
+      "id": 209,
+      "titel": "Društveni izlet",
+      "datum": "2023-10-26",
+      "datumText": "26. oktober 2023",
+      "ort": "Slovenija, Ormož/Jeruzalem",
+      "zeit": "07:00",
+      "jahr": 2023
+    },
+    {
+      "id": 301,
+      "titel": "Pevski koncert v novembru",
+      "datum": "2022-11-05",
+      "datumText": "5. november 2022",
+      "ort": "Pliberk, Kulturni dom",
+      "zeit": "19:00",
+      "beschreibung": "MoPZ Vinko Poljanec",
+      "jahr": 2022
+    },
+    {
+      "id": 302,
+      "titel": "Adventni koncert",
+      "datum": "2022-12-18",
+      "datumText": "18. december 2022",
+      "ort": "Škocjan, farna cerkev",
+      "zeit": "17:00",
+      "beschreibung": "Die Striezalan, Musikschule Südkärnten, MoPZ Vinko Poljanec",
+      "jahr": 2022
+    }
+  ]
+}
