@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Home, LogIn, Cake, Music, Clock, Menu, X, Warehouse, CalendarDays
 } from "lucide-react";
+import Logo from "./logo";
 
 // ============================================
 // NAVIGATION KONFIGURATION
@@ -105,15 +106,10 @@ export default function MyHeder() {
             )}
           </div>
 
-          {/* Mitte: kezar.at Logo */}
-          <a
-            href="https://kezar.at"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute left-1/2 transform -translate-x-1/2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold text-sm sm:text-base tracking-wide whitespace-nowrap transition-colors"
-          >
-            2026 kezar.at
-          </a>
+          {/* Mitte: Animated Logo */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <Logo />
+          </div>
 
           {/* Rechts: Platzhalter für Balance */}
           <div className="w-10 md:w-auto"></div>
