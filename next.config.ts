@@ -10,15 +10,24 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Cache-Control Headers hinzufügen
+  // Cache-Control Headers - nur API-Routen no-store
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

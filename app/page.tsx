@@ -9,18 +9,15 @@ import DönerMenu from "./subpages/samy";
 export default function Home() {
   return (
     <div>
-      <div>
+      <header>
         <MyHeder />
-      </div>
-      {/* <div>
-        <DönerMenu />
-      </div> */}
-      <div>
+      </header>
+      <main>
         <MyMainContent />
-      </div>
-      <div>
+      </main>
+      <footer>
         <MyFooter />
-      </div>
+      </footer>
       <LogClientVisit />
     </div>
   );
