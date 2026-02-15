@@ -8,7 +8,7 @@ const timebookPool = new Pool({
   host: process.env.TIMEBOOK_DB_HOST || '192.168.178.25',
   port: parseInt(process.env.TIMEBOOK_DB_PORT || '5432'),
   user: process.env.TIMEBOOK_DB_USER || 'marijan',
-  password: process.env.TIMEBOOK_DB_PASSWORD || 'postgres',
+  password: process.env.TIMEBOOK_DB_PASSWORD,
   database: 'db_timebook',
   max: 10,
   idleTimeoutMillis: 30000,
