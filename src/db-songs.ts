@@ -1,10 +1,10 @@
 import { Pool } from 'pg';
 
 const songPool = new Pool({
-  host: '192.168.178.25',
-  port: 5432,
-  user: 'marijan',
-  password: 'postgres',
+  host: process.env.TIMEBOOK_DB_HOST || '192.168.178.25',
+  port: parseInt(process.env.TIMEBOOK_DB_PORT || '5432'),
+  user: process.env.TIMEBOOK_DB_USER || 'marijan',
+  password: process.env.TIMEBOOK_DB_PASSWORD,
   database: 'db_songs',
   max: 10,
   idleTimeoutMillis: 30000,
