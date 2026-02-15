@@ -1,6 +1,7 @@
 'use client';
 
 import MovieList from './movie-component';
+import NotenList from './noten-component';
 
 export default function MyMainContent() {
   return (
@@ -35,6 +36,16 @@ export default function MyMainContent() {
 
       {/* Video Liste */}
       <MovieList />
+
+      {/* Horizontale Trennlinie */}
+      <div className="relative my-6">
+        <div className="living-line border-t-4 border-gray-600">
+          <div className="scan-light"></div>
+        </div>
+      </div>
+
+      {/* Gesangsnoten */}
+      <NotenList />
 
       {/* Horizontale Trennlinie */}
       <div className="relative my-6">
