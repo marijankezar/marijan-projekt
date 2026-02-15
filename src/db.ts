@@ -17,7 +17,6 @@ pool.on('error', (err) => {
 
 // Verbindung beim Start testen
 pool.query('SELECT 1')
-  .then(() => console.log('Datenbankverbindung erfolgreich'))
   .catch((err) => console.error('Datenbankverbindung fehlgeschlagen:', err.message));
 
 export default pool;

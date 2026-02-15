@@ -12,7 +12,6 @@ export async function middleware(request: NextRequest) {
   // Diese können von gecachtem Browser-JavaScript kommen und den Server crashen
   const nextAction = request.headers.get('Next-Action');
   if (nextAction) {
-    console.log('Server Action Request abgefangen:', nextAction);
     // Leere Antwort zurückgeben statt Server crashen zu lassen
     return new NextResponse(
       JSON.stringify({ error: 'Server Actions sind nicht verfügbar' }),

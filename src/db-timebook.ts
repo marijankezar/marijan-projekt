@@ -22,10 +22,6 @@ timebookPool.on('error', (err) => {
   console.error('TimeBook DB Pool Fehler:', err.message);
 });
 
-// Connection Test beim Start
-timebookPool.on('connect', () => {
-  console.log('TimeBook DB: Neue Verbindung hergestellt');
-});
 
 /**
  * Setzt den aktuellen Benutzer für Row Level Security

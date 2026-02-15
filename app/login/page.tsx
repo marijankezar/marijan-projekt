@@ -54,7 +54,9 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="relative">
+            <label htmlFor="login-username" className="sr-only">Benutzername</label>
             <input
+              id="login-username"
               type="text"
               placeholder="Benutzername"
               value={username}
@@ -65,7 +67,9 @@ export default function LoginPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="login-password" className="sr-only">Passwort</label>
             <input
+              id="login-password"
               type="password"
               placeholder="Passwort"
               value={passwort}

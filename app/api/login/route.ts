@@ -11,8 +11,6 @@ const MAX_VERSUCHE = 3;
 const SPERRZEIT_MINUTEN = 5;
 
 export async function POST(request: Request) {
-  console.log('Login-Anfrage erhalten');
-
   let username: string;
   let passwort: string;
 
@@ -120,7 +118,6 @@ export async function POST(request: Request) {
         admin: user.admin === 1,
       };
       await session.save();
-      console.log('Session erstellt für:', user.username);
     } catch (sessionError) {
       console.error('Session-Fehler:', sessionError);
       return NextResponse.json({

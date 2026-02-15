@@ -20,7 +20,7 @@ body {
 
 
 
-@keyframes shimmer {
+@keyframes shimmerBg {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
@@ -30,7 +30,7 @@ body {
    rgba(209, 213, 219, 0.8) 50%,
    rgba(229, 231, 235, 0.9) 100%);
   background-size: 200% 100%;
-  animation: shimmer 10s infinite linear;
+  animation: shimmerBg 10s infinite linear;
 }
 
 @media (prefers-color-scheme: dark) {

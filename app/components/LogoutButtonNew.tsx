@@ -15,9 +15,8 @@ export default function LogoutButtonNew() {
         method: 'POST',
         credentials: 'same-origin'
       });
-    } catch (err) {
+    } catch {
       // Ignoriere Fehler - wir leiten trotzdem weiter
-      console.log('Logout request completed');
     }
 
     // Immer zur Login-Seite weiterleiten

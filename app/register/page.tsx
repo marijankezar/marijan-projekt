@@ -63,7 +63,9 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
+            <label htmlFor="reg-username" className="sr-only">Benutzername</label>
             <input
+              id="reg-username"
               name="username"
               placeholder="Benutzername"
               required
@@ -74,7 +76,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-email" className="sr-only">E-Mail</label>
             <input
+              id="reg-email"
               name="email"
               type="email"
               placeholder="E-Mail"
@@ -86,7 +90,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-passwort" className="sr-only">Passwort</label>
             <input
+              id="reg-passwort"
               name="passwort"
               type="password"
               placeholder="Passwort"
@@ -98,7 +104,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-passwortWdh" className="sr-only">Passwort wiederholen</label>
             <input
+              id="reg-passwortWdh"
               name="passwortWdh"
               type="password"
               placeholder="Passwort wiederholen"
@@ -110,7 +118,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-vorname" className="sr-only">Vorname</label>
             <input
+              id="reg-vorname"
               name="vorname"
               placeholder="Vorname"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -120,7 +130,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-nachname" className="sr-only">Nachname</label>
             <input
+              id="reg-nachname"
               name="nachname"
               placeholder="Nachname"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -130,7 +142,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-adresse" className="sr-only">Adresse</label>
             <input
+              id="reg-adresse"
               name="adresse"
               placeholder="Adresse"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -140,7 +154,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-geburtsdatum" className="sr-only">Geburtsdatum</label>
             <input
+              id="reg-geburtsdatum"
               name="geburtsdatum"
               type="date"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -150,7 +166,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
+            <label htmlFor="reg-geschlecht" className="sr-only">Geschlecht</label>
             <select
+              id="reg-geschlecht"
               name="geschlecht"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}

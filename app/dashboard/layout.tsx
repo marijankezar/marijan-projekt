@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import React from "react";
 import Link from "next/link";
 import { LayoutDashboard, PlusCircle, Clock, User } from "lucide-react";
 import LogoutButtonNew from "../components/LogoutButtonNew";
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Stundenverwaltung und Übersicht',
+  robots: { index: false, follow: false },
+};
 
 // Verhindert Caching - Session wird bei jedem Request geprüft
 export const dynamic = 'force-dynamic';
