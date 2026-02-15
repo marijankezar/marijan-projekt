@@ -407,7 +407,7 @@ export default function FitnessPage() {
         .tooltip-trigger { position: relative; cursor: help; border-bottom: 1px dashed currentColor; }
         .tooltip-trigger .tooltip-content {
           visibility: hidden; opacity: 0; position: absolute; bottom: calc(100% + 8px); left: 50%;
-          transform: translateX(-50%) translateY(4px); width: max(280px, 40vw); max-width: 380px;
+          transform: translateX(-50%) translateY(4px); width: min(max(260px, 40vw), 380px);
           padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 400; line-height: 1.5;
           z-index: 50; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
           background: #1e293b; color: #e2e8f0; box-shadow: 0 8px 24px -4px rgba(0,0,0,0.3);
@@ -460,7 +460,7 @@ export default function FitnessPage() {
             </div>
             <span className="tooltip-trigger">{l('paceTitle')}<span className="tooltip-content">{l('tipPace')}</span></span>
           </h2>
-          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-5 sm:mb-6 ml-13">{l('paceSubtitle')}</p>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-5 sm:mb-6 sm:ml-13">{l('paceSubtitle')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5 sm:mb-6">
             <div>
               <label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">{l('distanceKm')} <span className="text-red-500">*</span></label>
@@ -469,7 +469,7 @@ export default function FitnessPage() {
             <div>
               <label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">{l('targetTime')} <span className="text-red-500">*</span></label>
               <div className="flex gap-2 sm:gap-3 items-center">
-                {[{ val: timeHours, set: setTimeHours, label: 'h', pr: 'pr-9' }, { val: timeMinutes, set: setTimeMinutes, label: 'min', pr: 'pr-12', max: 59 }, { val: timeSeconds, set: setTimeSeconds, label: 'sec', pr: 'pr-12', max: 59 }].map((f, i) => (
+                {[{ val: timeHours, set: setTimeHours, label: 'h', pr: 'pr-7 sm:pr-9' }, { val: timeMinutes, set: setTimeMinutes, label: 'min', pr: 'pr-10 sm:pr-12', max: 59 }, { val: timeSeconds, set: setTimeSeconds, label: 'sec', pr: 'pr-10 sm:pr-12', max: 59 }].map((f, i) => (
                   <span key={f.label} className="contents">
                     {i > 0 && <span className="text-xl font-bold text-gray-400 dark:text-gray-500">:</span>}
                     <div className="flex-1 relative">
@@ -780,7 +780,7 @@ export default function FitnessPage() {
               <span className="tooltip-trigger">{l('bfTitle')}<span className="tooltip-content">{l('tipBf')}</span></span>
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{l('bfSubtitle')}</p>
-            <div className={`grid ${gender === 'female' ? 'grid-cols-3' : 'grid-cols-2'} gap-4 mb-5`}>
+            <div className={`grid ${gender === 'female' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-4 mb-5`}>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{l('bfNeck')}</label>
                 <input type="number" min="1" step="0.1" placeholder="e.g. 38" value={bfNeck} onChange={(e) => setBfNeck(e.target.value)}
@@ -942,8 +942,8 @@ export default function FitnessPage() {
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{l('bpSubtitle')}</p>
             {bpReferences ? (
-              <div className="animate-scale-in">
-                <table className="w-full text-sm sm:text-base">
+              <div className="animate-scale-in overflow-x-auto">
+                <table className="w-full text-sm sm:text-base min-w-[300px]">
                   <thead>
                     <tr className="border-b-2 border-purple-200 dark:border-purple-800/50">
                       <th className="text-left py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">{l('timeOfDay')}</th>
