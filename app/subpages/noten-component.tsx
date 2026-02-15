@@ -15,7 +15,7 @@ const NotenList: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Gesangsnoten
         </h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -46,7 +46,7 @@ const NotenList: React.FC = () => {
 
       {/* Noten Grid */}
       {noten.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {noten.map((item, index) => {
             const pdfUrl = `${MEDIA_BASE_URL}/${encodeURIComponent(item.filename)}`;
             const thumbUrl = item.thumbnail
@@ -59,7 +59,7 @@ const NotenList: React.FC = () => {
                 className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Thumbnail oder Platzhalter */}
-                <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                <div className="aspect-[4/5] sm:aspect-[3/4] bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
                   {thumbUrl ? (
                     <img
                       src={thumbUrl}
@@ -67,7 +67,7 @@ const NotenList: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+                    <FileText className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600" />
                   )}
                 </div>
 
@@ -83,17 +83,17 @@ const NotenList: React.FC = () => {
                       href={pdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors min-h-[44px]"
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-4 h-4" />
                       Odpri
                     </a>
                     <a
                       href={pdfUrl}
                       download
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors min-h-[44px]"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-4 h-4" />
                       Prenesi
                     </a>
                   </div>
