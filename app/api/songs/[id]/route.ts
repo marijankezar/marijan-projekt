@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-// Pool direkt hier erstellen
-const songPool = new Pool({
-  host: '192.168.178.25',
-  port: 5432,
-  user: 'marijan',
-  password: 'postgres',
-  database: 'db_songs',
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+import songPool from '@/db-songs';
 
 // GET /api/songs/[id] - Einzelner Song mit Text
 export async function GET(
