@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import songPool from '@/db-songs';
+import { Pool } from 'pg';
+
+const songPool = new Pool({
+  connectionString: process.env.SONGS_DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
 
 // GET /api/songs - Alle Songs oder Suche
 export async function GET(request: NextRequest) {
