@@ -2,7 +2,42 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/db";
 
+// Rate Limiting: max 5 Registrierungen pro IP innerhalb von 15 Minuten
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 Minuten
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
+// Alte Einträge regelmäßig bereinigen
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}, 60 * 1000);
+
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: "Zu viele Registrierungsversuche. Bitte später erneut versuchen." },
+      { status: 429 }
+    );
+  }
+
   try {
     const data = await request.json();
 

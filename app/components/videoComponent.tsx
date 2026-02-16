@@ -17,7 +17,7 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+            iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
             iframe.title = 'YouTube video';
             iframe.allow =
               'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
@@ -25,19 +25,26 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
             iframe.className = 'absolute top-0 left-0 w-full h-full border-none rounded-xl';
 
             iframe.onerror = () => {
-              container.innerHTML = `
-                <div class="absolute inset-0 flex items-center justify-center text-center bg-gray-900 text-white p-4">
-                  <div>
-                    <p class="text-gray-300">Video ni na voljo</p>
-                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer" class="underline text-cyan-400 mt-2 inline-block hover:text-cyan-300">
-                      Poglej na YouTube
-                    </a>
-                  </div>
-                </div>
-              `;
+              while (container.firstChild) container.removeChild(container.firstChild);
+              const wrapper = document.createElement('div');
+              wrapper.className = 'absolute inset-0 flex items-center justify-center text-center bg-gray-900 text-white p-4';
+              const inner = document.createElement('div');
+              const p = document.createElement('p');
+              p.className = 'text-gray-300';
+              p.textContent = 'Video ni na voljo';
+              const a = document.createElement('a');
+              a.href = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+              a.target = '_blank';
+              a.rel = 'noopener noreferrer';
+              a.className = 'underline text-cyan-400 mt-2 inline-block hover:text-cyan-300';
+              a.textContent = 'Poglej na YouTube';
+              inner.appendChild(p);
+              inner.appendChild(a);
+              wrapper.appendChild(inner);
+              container.appendChild(wrapper);
             };
 
-            container.innerHTML = '';
+            while (container.firstChild) container.removeChild(container.firstChild);
             container.appendChild(iframe);
             observer.unobserve(container);
           }

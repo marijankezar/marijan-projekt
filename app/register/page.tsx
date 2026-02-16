@@ -68,6 +68,7 @@ export default function RegisterPage() {
               id="reg-username"
               name="username"
               placeholder="Benutzername"
+              autoComplete="username"
               required
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
@@ -82,6 +83,7 @@ export default function RegisterPage() {
               name="email"
               type="email"
               placeholder="E-Mail"
+              autoComplete="email"
               required
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
@@ -96,6 +98,7 @@ export default function RegisterPage() {
               name="passwort"
               type="password"
               placeholder="Passwort"
+              autoComplete="new-password"
               required
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
@@ -110,6 +113,7 @@ export default function RegisterPage() {
               name="passwortWdh"
               type="password"
               placeholder="Passwort wiederholen"
+              autoComplete="new-password"
               required
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
@@ -123,6 +127,7 @@ export default function RegisterPage() {
               id="reg-vorname"
               name="vorname"
               placeholder="Vorname"
+              autoComplete="given-name"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
             />
@@ -135,6 +140,7 @@ export default function RegisterPage() {
               id="reg-nachname"
               name="nachname"
               placeholder="Nachname"
+              autoComplete="family-name"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
             />
@@ -147,6 +153,7 @@ export default function RegisterPage() {
               id="reg-adresse"
               name="adresse"
               placeholder="Adresse"
+              autoComplete="street-address"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
             />
@@ -159,6 +166,7 @@ export default function RegisterPage() {
               id="reg-geburtsdatum"
               name="geburtsdatum"
               type="date"
+              autoComplete="bday"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
             />
@@ -170,6 +178,7 @@ export default function RegisterPage() {
             <select
               id="reg-geschlecht"
               name="geschlecht"
+              autoComplete="sex"
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
               onChange={handleChange}
               value={formData.geschlecht}

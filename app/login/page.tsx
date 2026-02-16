@@ -8,10 +8,12 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [passwort, setPasswort] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       const res = await fetch('/api/login', {
@@ -36,6 +38,8 @@ export default function LoginPage() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unbekannter Fehler';
       setError(`Fehler beim Verbinden mit dem Server: ${errorMsg}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,6 +63,7 @@ export default function LoginPage() {
               id="login-username"
               type="text"
               placeholder="Benutzername"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -72,6 +77,7 @@ export default function LoginPage() {
               id="login-password"
               type="password"
               placeholder="Passwort"
+              autoComplete="current-password"
               value={passwort}
               onChange={(e) => setPasswort(e.target.value)}
               className="w-full border-b-2 border-gray-300 dark:border-gray-600 bg-transparent py-3 text-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none sm:text-xl"
@@ -81,18 +87,26 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full rounded-md bg-indigo-600 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-indigo-500 hover:scale-105 active:scale-95 sm:py-4 sm:text-xl"
+            disabled={loading}
+            className="w-full rounded-md bg-indigo-600 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-indigo-500 hover:scale-105 active:scale-95 sm:py-4 sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            EINLOGGEN
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                WIRD EINGELOGGT...
+              </span>
+            ) : (
+              'EINLOGGEN'
+            )}
           </button>
         </form>
 
-        <a
-          href="#"
-          className="block text-center text-sm font-semibold text-gray-500 dark:text-gray-400 transition-colors duration-300 hover:text-indigo-600 dark:hover:text-indigo-300 sm:text-base"
+        <p
+          className="block text-center text-sm font-semibold text-gray-400 dark:text-gray-500 sm:text-base cursor-default"
+          title="Bitte kontaktiere den Administrator"
         >
           PASSWORT VERGESSEN?
-        </a>
+        </p>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 sm:text-base">
           Kein Konto?{' '}
