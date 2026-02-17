@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import {
-  Home, LogIn, Cake, Music, Clock, Menu, X, Warehouse, CalendarDays, Activity
+  Home, LogIn, Cake, Music, Clock, Menu, X, Warehouse, CalendarDays, Activity, UtensilsCrossed
 } from "lucide-react";
 import Logo from "./logo";
 
@@ -28,6 +28,7 @@ const navigationItems: NavItem[] = [
   { href: "/elsbacher", label: "ELRO", icon: Warehouse },
   { href: "/termine", label: "Termine", icon: CalendarDays },
   { href: "/fitness", label: "Fitness", icon: Activity },
+  { href: "/samy", label: "Samy Döner", icon: UtensilsCrossed },
 ];
 
 export default function MyHeder() {
