@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import MyHeder from '../components/header';
 import MyFooter from '../components/footer';
 import { UtensilsCrossed, Flame, Salad, ChefHat, Star } from 'lucide-react';
@@ -171,7 +172,7 @@ function MenuSection({ category }: { category: MenuCategory }) {
           {category.title}
         </h2>
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-800/50 p-2">
+      <div className="divide-y divide-gray-100 dark:divide-gray-800/50 p-1">
         {category.items.map((item) => (
           <MenuItemCard key={item.name} item={item} />
         ))}
@@ -184,7 +185,25 @@ function MenuSection({ category }: { category: MenuCategory }) {
 // HAUPTSEITE
 // ============================================
 
+const directions = ['left', 'right', 'top', 'bottom'] as const;
+
 export default function SamyPage() {
+  const [dir, setDir] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDir((d) => (d + 1) % directions.length);
+      setAnimKey((k) => k + 1);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentDir = directions[dir];
+  const titleAnim = currentDir === 'left' ? 'slideFromLeft' :
+                     currentDir === 'right' ? 'slideFromRight' :
+                     currentDir === 'top' ? 'slideFromTop' : 'slideFromBottom';
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black flex flex-col">
       <header>
@@ -193,71 +212,101 @@ export default function SamyPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <div className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 text-white">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm mb-6">
-              <UtensilsCrossed className="w-8 h-8" />
+        <style>{`
+          @keyframes slideFromLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes slideFromRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes slideFromTop {
+            from { opacity: 0; transform: translateY(-25px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes slideFromBottom {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes subtitleReveal {
+            from { opacity: 0; letter-spacing: 0.3em; }
+            to { opacity: 1; letter-spacing: 0.05em; }
+          }
+          @keyframes iconPop {
+            0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+            60% { transform: rotate(360deg) scale(1.1); opacity: 1; }
+            100% { transform: rotate(360deg) scale(1); opacity: 1; }
+          }
+        `}</style>
+        <div className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 text-white overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center">
+            <div className="inline-flex items-center gap-4">
+              <div key={`icon-${animKey}`} className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm" style={{ animation: 'iconPop 0.8s ease-out both' }}>
+                <UtensilsCrossed className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <h1 key={`title-${animKey}`} className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight" style={{ animation: `${titleAnim} 0.8s ease-out both` }}>
+                  Samy Döner Kebap
+                </h1>
+                <p key={`sub-${animKey}`} className="text-red-100 text-sm sm:text-base tracking-wide" style={{ animation: 'subtitleReveal 1s ease-out 0.3s both' }}>
+                  Frisch zubereitet, mit Liebe serviert
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-              Samy Döner Kebap
-            </h1>
-            <p className="mt-3 text-red-100 text-lg sm:text-xl max-w-xl mx-auto">
-              Frisch zubereitet, mit Liebe serviert
-            </p>
-          </div>
-        </div>
-
-        {/* Hinweis-Banner */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-5">
-          <div className="flex items-center gap-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-5 py-3 shadow-sm">
-            <Star className="w-5 h-5 text-amber-500 shrink-0" />
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-              Jetzt auch Kalbfleisch gegen Aufpreis von 1€ erhältlich!
-            </p>
           </div>
         </div>
 
         {/* Menü-Kategorien */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Linke Spalte: Döner & Dürüm */}
-            <div className="space-y-6 lg:space-y-8">
-              <MenuSection category={categories[0]} />
+        <div className="grid grid-cols-2 gap-6 px-4 py-6">
+          {/* Linke Spalte: Döner & Dürüm + Extras */}
+          <div className="space-y-6">
+            <MenuSection category={categories[0]} />
 
-              {/* Extras */}
-              <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 overflow-hidden shadow-sm">
-                <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 px-6 py-4 bg-gray-50 dark:bg-gray-900/80">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                    Extras
-                  </h2>
-                </div>
-                <div className="px-6 py-4 space-y-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Schafskäse, Cheddar-Mix, Jalapeños
-                    </p>
-                    <span className="shrink-0 font-bold text-red-600 dark:text-red-400 tabular-nums">
-                      + €1,00
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    Saucen: Cocktail-, Knoblauch- oder scharfe Sauce
+            {/* Extras */}
+            <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 overflow-hidden shadow-sm">
+              <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 px-6 py-4 bg-gray-50 dark:bg-gray-900/80">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Extras
+                </h2>
+              </div>
+              <div className="px-6 py-4 space-y-2">
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Schafskäse, Cheddar-Mix, Jalapeños
                   </p>
+                  <span className="shrink-0 font-bold text-red-600 dark:text-red-400 tabular-nums">
+                    + €1,00
+                  </span>
                 </div>
-              </section>
-            </div>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Saucen: Cocktail-, Knoblauch- oder scharfe Sauce
+                </p>
+              </div>
+            </section>
+          </div>
 
-            {/* Rechte Spalte: Spezialitäten & Bowls */}
-            <div className="space-y-6 lg:space-y-8">
-              <MenuSection category={categories[1]} />
-              <MenuSection category={categories[2]} />
-            </div>
+          {/* Rechte Spalte: Spezialitäten & Bowls */}
+          <div className="space-y-6">
+            <MenuSection category={categories[1]} />
+            <MenuSection category={categories[2]} />
+          </div>
+        </div>
+
+        {/* Kalbfleisch-Hinweis */}
+        <div className="px-4 pb-4">
+          <div className="flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-600 px-6 py-4 shadow-md">
+            <Star className="w-6 h-6 text-amber-900 shrink-0" />
+            <p className="text-base sm:text-lg font-bold text-amber-900">
+              Jetzt auch Kalbfleisch gegen Aufpreis von 1€ erhältlich!
+            </p>
+            <Star className="w-6 h-6 text-amber-900 shrink-0 hidden sm:block" />
           </div>
         </div>
 
         {/* Allergene Hinweis */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="px-4 pb-6">
           <p className="text-xs text-center text-gray-400 dark:text-gray-600">
             Allergene: A = Gluten, C = Eier, F = Soja, G = Milch, N = Schalenfrüchte.
             Alle Preise inkl. MwSt.
