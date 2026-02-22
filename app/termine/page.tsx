@@ -1,11 +1,56 @@
 'use client';
 
-import { Music, Sparkles, ChevronDown, MapPin, Clock, Calendar, Gem, Zap, Timer } from 'lucide-react';
+import { Music, Timer, ChevronDown, MapPin, Clock, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import MyHeader from '../components/header';
 
+type Lang = 'de' | 'sl' | 'la';
+
+const translations = {
+  de: {
+    countdown: 'Countdown zum nächsten Termin',
+    nextBadge: 'Nächster Termin',
+    upcoming: 'Kommende Termine',
+    archive: 'Archiv',
+    termineCount: 'Termine',
+    at: 'um', oclock: 'Uhr',
+    loading: 'Wird geladen…',
+    error: 'Fehler beim Laden',
+    days: 'TAGE', hours: 'STD', min: 'MIN', sec: 'SEK',
+  },
+  sl: {
+    countdown: 'Odštevalnik do naslednjega termina',
+    nextBadge: 'Naslednji Termin',
+    upcoming: 'Prihajajoči Termini',
+    archive: 'Arhiv',
+    termineCount: 'terminov',
+    at: 'ob', oclock: 'uri',
+    loading: 'Nalaganje terminov…',
+    error: 'Napaka pri nalaganju',
+    days: 'DNI', hours: 'UR', min: 'MIN', sec: 'SEK',
+  },
+  la: {
+    countdown: 'Numeratio ad eventum proximum',
+    nextBadge: 'Proximus Eventus',
+    upcoming: 'Eventa Futura',
+    archive: 'Archivum',
+    termineCount: 'eventuum',
+    at: 'hora', oclock: '',
+    loading: 'Oneratur…',
+    error: 'Error in onerando',
+    days: 'DIES', hours: 'HORAE', min: 'MIN', sec: 'SEC',
+  },
+};
+
+type T = typeof translations.de;
+
 // Countdown Component
-function Countdown({ targetDate, targetTime, eventName }: { targetDate: string; targetTime: string; eventName: string }) {
+function Countdown({ targetDate, targetTime, eventName, t }: {
+  targetDate: string;
+  targetTime: string;
+  eventName: string;
+  t: T;
+}) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mounted, setMounted] = useState(false);
 
@@ -13,19 +58,16 @@ function Countdown({ targetDate, targetTime, eventName }: { targetDate: string; 
     setMounted(true);
 
     const calculateTime = () => {
-      const [hours, minutes] = targetTime.split(':').map(Number);
+      const [h, m] = targetTime.split(':').map(Number);
       const target = new Date(targetDate);
-      target.setHours(hours || 19, minutes || 0, 0, 0);
-
-      const now = new Date().getTime();
-      const difference = target.getTime() - now;
-
-      if (difference > 0) {
+      target.setHours(h || 19, m || 0, 0, 0);
+      const diff = target.getTime() - Date.now();
+      if (diff > 0) {
         setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000),
         });
       }
     };
@@ -37,38 +79,32 @@ function Countdown({ targetDate, targetTime, eventName }: { targetDate: string; 
 
   if (!mounted) return null;
 
-  const timeUnits = [
-    { value: timeLeft.days, label: 'DNI', labelSingle: 'DAN' },
-    { value: timeLeft.hours, label: 'UR', labelSingle: 'URA' },
-    { value: timeLeft.minutes, label: 'MIN', labelSingle: 'MIN' },
-    { value: timeLeft.seconds, label: 'SEK', labelSingle: 'SEK' },
+  const units = [
+    { value: timeLeft.days, label: t.days },
+    { value: timeLeft.hours, label: t.hours },
+    { value: timeLeft.minutes, label: t.min },
+    { value: timeLeft.seconds, label: t.sec },
   ];
 
   return (
-    <div className="countdown-container">
-      <div className="countdown-glow" />
-      <div className="countdown-border" />
-      <div className="countdown-content">
-        <div className="countdown-header">
-          <Timer className="w-5 h-5 text-cyan-400" />
-          <span>Odštevalnik do naslednjega eventa</span>
-          <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
-        </div>
-
-        <h3 className="countdown-event-name">{eventName}</h3>
-
-        <div className="countdown-boxes">
-          {timeUnits.map((unit, i) => (
-            <div key={i} className="countdown-box">
-              <div className="countdown-value">
-                {String(unit.value).padStart(2, '0')}
-              </div>
-              <div className="countdown-label">
-                {unit.value === 1 ? unit.labelSingle : unit.label}
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8 text-center">
+      <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs uppercase tracking-widest mb-3">
+        <Timer className="w-4 h-4 text-amber-400" />
+        <span>{t.countdown}</span>
+      </div>
+      <h3 className="text-lg font-bold text-white mb-6">{eventName}</h3>
+      <div className="flex justify-center gap-3 sm:gap-4">
+        {units.map((unit, i) => (
+          <div
+            key={i}
+            className="w-16 h-20 sm:w-20 sm:h-24 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col items-center justify-center"
+          >
+            <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 leading-none">
+              {String(unit.value).padStart(2, '0')}
+            </span>
+            <span className="text-[10px] text-zinc-600 uppercase tracking-widest mt-1">{unit.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -86,82 +122,65 @@ interface Termin {
 }
 
 interface TermineData {
-  meta: {
-    titel: string;
-    untertitel: string;
-    autor: string;
-  };
+  meta: { titel: string; untertitel: string; autor: string };
   termine: Termin[];
 }
 
-// Animated Border Card
-function AnimatedBorderCard({ termin, index, isNext }: { termin: Termin; index: number; isNext: boolean }) {
+function EventCard({ termin, index, isNext, t }: { termin: Termin; index: number; isNext: boolean; t: T }) {
   return (
     <div
-      className="animated-card group"
-      style={{ animationDelay: `${index * 100}ms` }}
+      className="relative border border-zinc-800 hover:border-amber-500/40 bg-zinc-900/40 rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/5"
+      style={{ opacity: 0, animation: `fadeInUp 0.5s ease-out ${index * 100}ms forwards` }}
     >
-      {/* Rotating gradient border */}
-      <div className="card-glow" />
-      <div className="card-border" />
+      {isNext && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="px-4 py-1 text-xs font-bold uppercase tracking-widest bg-amber-500 text-zinc-950 rounded-full">
+            {t.nextBadge}
+          </span>
+        </div>
+      )}
 
-      {/* Content */}
-      <div className="card-content">
-        {isNext && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-            <span className="px-4 py-1 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-yellow-400 via-pink-500 to-cyan-400 text-white rounded-full shadow-lg animate-pulse">
-              Naslednji Event
-            </span>
-          </div>
-        )}
+      <p className="flex items-center justify-center gap-1.5 text-amber-400/70 text-sm mb-2">
+        <Calendar className="w-3.5 h-3.5" />
+        {termin.datumText}
+      </p>
 
-        <p className="datum-text">
-          <Calendar className="inline w-5 h-5 mr-2 opacity-70" />
-          {termin.datumText}
+      <p className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">{termin.titel}</p>
+
+      {termin.beschreibung && (
+        <p className="text-sm text-zinc-500 italic mb-2">{termin.beschreibung}</p>
+      )}
+
+      {termin.ort && (
+        <p className="flex items-center justify-center gap-1 text-sm text-zinc-500 mb-1">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          {termin.ort}
         </p>
+      )}
 
-        <p className="titel-text">
-          {termin.titel}
+      {termin.zeit && (
+        <p className="flex items-center justify-center gap-1 text-sm text-zinc-600">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          {t.at} {termin.zeit} {t.oclock}
         </p>
-
-        {termin.beschreibung && (
-          <p className="beschreibung-text">
-            {termin.beschreibung}
-          </p>
-        )}
-
-        {termin.ort && (
-          <p className="ort-text">
-            <MapPin className="inline w-4 h-4 mr-1" />
-            {termin.ort}
-          </p>
-        )}
-
-        {termin.zeit && (
-          <p className="zeit-text">
-            <Clock className="inline w-4 h-4 mr-1" />
-            ob {termin.zeit} uri
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-// Compact card for past events
-function CompactCard({ termin, index }: { termin: Termin; index: number }) {
+function CompactCard({ termin, index, t }: { termin: Termin; index: number; t: T }) {
   return (
     <div
-      className="compact-card group"
-      style={{ animationDelay: `${index * 50}ms` }}
+      className="border border-zinc-800/60 hover:bg-zinc-900 rounded-xl px-4 py-3 transition-colors"
+      style={{ opacity: 0, animation: `fadeIn 0.4s ease-out ${index * 40}ms forwards` }}
     >
-      <div className="compact-glow" />
-      <div className="compact-border" />
-      <div className="compact-content">
-        <span className="compact-datum">{termin.datumText}</span>
-        <span className="compact-titel">{termin.titel}</span>
-        {termin.ort && <span className="compact-ort">{termin.ort}</span>}
-        {termin.zeit && <span className="compact-zeit">ob {termin.zeit}</span>}
+      <p className="text-xs text-zinc-700 mb-0.5">{termin.datumText}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-zinc-300 flex-1 min-w-0">{termin.titel}</span>
+        {termin.ort && <span className="text-xs text-zinc-600 shrink-0">{termin.ort}</span>}
+        {termin.zeit && (
+          <span className="text-xs text-amber-600/70 shrink-0">{t.at} {termin.zeit} {t.oclock}</span>
+        )}
       </div>
     </div>
   );
@@ -171,26 +190,34 @@ export default function TerminePage() {
   const [termineData, setTermineData] = useState<TermineData | null>(null);
   const [showArchive, setShowArchive] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState<Lang>('de');
+
+  // Restore language from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('termine_lang') as Lang | null;
+    if (saved && ['de', 'sl', 'la'].includes(saved)) setLang(saved);
+  }, []);
+
+  const handleLangChange = (l: Lang) => {
+    setLang(l);
+    localStorage.setItem('termine_lang', l);
+  };
 
   useEffect(() => {
     fetch('/data/termine.json')
       .then(res => res.json())
-      .then(data => {
-        setTermineData(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading termine:', err);
-        setLoading(false);
-      });
+      .then(data => { setTermineData(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
+
+  const t = translations[lang];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-cyan-400 animate-pulse">Nalaganje terminov...</p>
+          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-zinc-500 text-sm">{t.loading}</p>
         </div>
       </div>
     );
@@ -198,8 +225,8 @@ export default function TerminePage() {
 
   if (!termineData) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-red-400">Napaka pri nalaganju terminov</p>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <p className="text-red-400 text-sm">{t.error}</p>
       </div>
     );
   }
@@ -208,91 +235,115 @@ export default function TerminePage() {
   heute.setHours(0, 0, 0, 0);
   const isVergangen = (datum: string) => new Date(datum) < heute;
 
-  // Group by year
   const years = [2026, 2025, 2024, 2023, 2022];
   const termineByYear: Record<number, Termin[]> = {};
-
   years.forEach(year => {
     termineByYear[year] = termineData.termine
-      .filter(t => t.jahr === year)
+      .filter(item => item.jahr === year)
       .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
   });
 
   const kommendeTermine = termineData.termine
-    .filter(t => !isVergangen(t.datum))
+    .filter(item => !isVergangen(item.datum))
     .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
   const nextEvent = kommendeTermine[0];
 
   return (
-    <div className="termine-page">
+    <div className="min-h-screen bg-zinc-950 text-white">
       <MyHeader />
 
       {/* Hero */}
-      <header className="hero-section">
-        <div className="hero-bg" />
-        <div className="hero-content">
-          <div className="hero-icon">
-            <Music className="w-12 h-12 text-white" />
-            <Sparkles className="sparkle-icon" />
+      <header className="relative py-16 px-4 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.07)_0%,transparent_60%)] pointer-events-none" />
+        <div className="relative z-10 max-w-xl mx-auto">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-6">
+            <Music className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="hero-title">{termineData.meta.titel}</h1>
-          <h2 className="hero-subtitle">Termini 2022 — 2026</h2>
-          <p className="hero-tagline">
-            <Gem className="inline w-4 h-4" />
-            <span>{termineData.meta.untertitel}</span>
-            <Gem className="inline w-4 h-4" />
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-2">
+            {termineData.meta.titel}
+          </h1>
+          <p className="text-zinc-600 text-xs uppercase tracking-[0.25em] mb-2">
+            Termine 2022 — 2026
           </p>
+          <p className="text-zinc-500 text-sm mb-8">{termineData.meta.untertitel}</p>
+
+          {/* Language Switcher */}
+          <div className="flex justify-center">
+            <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-full p-1">
+              {(['de', 'sl', 'la'] as Lang[]).map(l => (
+                <button
+                  key={l}
+                  onClick={() => handleLangChange(l)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest transition-all ${
+                    lang === l
+                      ? 'bg-amber-500 text-zinc-950'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="main-content">
-        {/* Countdown zum nächsten Event */}
+      <main className="max-w-3xl mx-auto px-4 pb-16">
+        {/* Countdown */}
         {nextEvent && (
           <Countdown
             targetDate={nextEvent.datum}
             targetTime={nextEvent.zeit}
             eventName={nextEvent.titel}
+            t={t}
           />
         )}
 
-        {/* Kommende Termine 2025 */}
+        {/* Kommende Termine */}
         {kommendeTermine.length > 0 && (
-          <section className="termine-section">
-            <h2 className="section-title">
-              <span className="title-bar from-cyan-400 to-purple-500" />
-              Prihajajoči Termini
+          <section className="mb-10">
+            <h2 className="flex items-center gap-3 text-base font-bold text-zinc-200 uppercase tracking-widest mb-5">
+              <span className="w-1 h-4 bg-amber-500 rounded-full shrink-0" />
+              {t.upcoming}
+              <span className="ml-auto text-xs font-normal text-zinc-700 normal-case tracking-normal">
+                {kommendeTermine.length} {t.termineCount}
+              </span>
             </h2>
-            <div className="termine-grid">
+            <div className="flex flex-col gap-4">
               {kommendeTermine.map((termin, index) => (
-                <AnimatedBorderCard
+                <EventCard
                   key={termin.id}
                   termin={termin}
                   index={index}
                   isNext={termin.id === nextEvent?.id}
+                  t={t}
                 />
               ))}
             </div>
           </section>
         )}
 
-        {/* Archive Years */}
+        {/* Archive */}
         {years.map(year => {
-          const pastEventsForYear = (termineByYear[year] || []).filter(t => isVergangen(t.datum));
-          if (pastEventsForYear.length === 0) return null;
+          const pastForYear = (termineByYear[year] || []).filter(item => isVergangen(item.datum));
+          if (pastForYear.length === 0) return null;
           return (
-            <section key={year} className="termine-section">
+            <section key={year} className="mb-2">
               <button
                 onClick={() => setShowArchive(showArchive === year ? null : year)}
-                className="archive-button"
+                className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-900/30 border border-zinc-800/60 hover:border-zinc-700 rounded-xl text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-all"
               >
-                <span className="title-bar from-gray-600 to-gray-700" />
-                <span>Arhiv {year} ({pastEventsForYear.length} terminov)</span>
-                <ChevronDown className={`w-5 h-5 transition-transform ${showArchive === year ? 'rotate-180' : ''}`} />
+                <span className="w-1 h-3.5 bg-zinc-700 rounded-full shrink-0" />
+                <span>{t.archive} {year}</span>
+                <span className="text-xs text-zinc-700 ml-0.5">({pastForYear.length} {t.termineCount})</span>
+                <ChevronDown
+                  className={`w-4 h-4 ml-auto transition-transform duration-200 ${showArchive === year ? 'rotate-180' : ''}`}
+                />
               </button>
               {showArchive === year && (
-                <div className="compact-grid mt-4">
-                  {pastEventsForYear.map((termin, index) => (
-                    <CompactCard key={termin.id} termin={termin} index={index} />
+                <div className="mt-2 flex flex-col gap-1">
+                  {pastForYear.map((termin, index) => (
+                    <CompactCard key={termin.id} termin={termin} index={index} t={t} />
                   ))}
                 </div>
               )}
@@ -301,421 +352,24 @@ export default function TerminePage() {
         })}
       </main>
 
-      {/* Footer */}
-      <footer className="footer-section">
-        <div className="footer-gems">
-          {[...Array(5)].map((_, i) => (
-            <Gem key={i} className="w-5 h-5 text-cyan-400 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
-          ))}
-        </div>
-        <p className="footer-author">{termineData.meta.autor}</p>
-        <p className="footer-powered">
-          Powered by <a href="https://kezar.at" className="footer-link">Kezar.at</a>
+      <footer className="border-t border-zinc-900 py-8 text-center">
+        <p className="text-zinc-600 text-sm">{termineData.meta.autor}</p>
+        <p className="text-zinc-700 text-xs mt-1">
+          Powered by{' '}
+          <a href="https://kezar.at" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+            Kezar.at
+          </a>
         </p>
       </footer>
 
       <style jsx global>{`
-        .termine-page {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
-          color: white;
-        }
-
-        /* Hero */
-        .hero-section {
-          position: relative;
-          min-height: 45vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 3rem 1rem;
-        }
-        .hero-bg {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(ellipse at top, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-                      radial-gradient(ellipse at bottom right, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
-        }
-        .hero-content { position: relative; text-align: center; z-index: 10; }
-        .hero-icon {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 80px;
-          height: 80px;
-          background: linear-gradient(135deg, #06b6d4, #a855f7);
-          border-radius: 1rem;
-          margin-bottom: 1.5rem;
-          animation: float 3s ease-in-out infinite;
-        }
-        .sparkle-icon {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 24px;
-          height: 24px;
-          color: #fbbf24;
-          animation: sparkle 1.5s ease-in-out infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes sparkle {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          50% { transform: scale(1.2) rotate(180deg); }
-        }
-        .hero-title {
-          font-size: clamp(2.5rem, 8vw, 4.5rem);
-          font-weight: 900;
-          background: linear-gradient(135deg, #fff, #06b6d4, #a855f7);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          text-transform: uppercase;
-        }
-        .hero-subtitle {
-          font-size: clamp(1rem, 3vw, 1.5rem);
-          color: #9ca3af;
-          margin-bottom: 0.5rem;
-        }
-        .hero-tagline {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          color: #06b6d4;
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 0.2em;
-        }
-
-        /* Countdown */
-        .countdown-container {
-          position: relative;
-          border-radius: 1.5rem;
-          margin-bottom: 3rem;
-        }
-        .countdown-glow {
-          position: absolute;
-          inset: -3px;
-          border-radius: 1.5rem;
-          background: conic-gradient(from 0deg, #06b6d4, #a855f7, #ec4899, #fbbf24, #06b6d4);
-          filter: blur(20px);
-          opacity: 0.4;
-          animation: subtlePulse 4s ease-in-out infinite;
-          z-index: 0;
-        }
-        .countdown-border {
-          position: absolute;
-          inset: 0;
-          border-radius: 1.5rem;
-          padding: 3px;
-          background: conic-gradient(from 0deg, #06b6d4, #a855f7, #ec4899, #fbbf24, #06b6d4);
-          z-index: 1;
-        }
-        .countdown-border::before {
-          content: '';
-          position: absolute;
-          inset: 3px;
-          background: linear-gradient(135deg, #0a0a0a, #151515);
-          border-radius: calc(1.5rem - 3px);
-        }
-        .countdown-content {
-          position: relative;
-          z-index: 2;
-          padding: 2rem;
-          margin: 3px;
-          background: linear-gradient(135deg, rgba(10, 10, 10, 0.98), rgba(20, 20, 20, 0.98));
-          border-radius: calc(1.5rem - 3px);
-          text-align: center;
-        }
-        .countdown-header {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          font-size: 0.8rem;
-          color: #9ca3af;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-bottom: 0.75rem;
-        }
-        .countdown-event-name {
-          font-size: clamp(1.2rem, 4vw, 1.8rem);
-          font-weight: 800;
-          background: linear-gradient(135deg, #fff, #06b6d4, #a855f7);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 1.5rem;
-        }
-        .countdown-boxes {
-          display: flex;
-          justify-content: center;
-          gap: 0.75rem;
-        }
-        .countdown-box {
-          position: relative;
-          width: 70px;
-          height: 85px;
-          background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-          border-radius: 0.75rem;
-          border: 1px solid #333;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        .countdown-box::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #333, transparent);
-        }
-        .countdown-value {
-          font-size: 2rem;
-          font-weight: 900;
-          font-family: monospace;
-          background: linear-gradient(180deg, #fff, #06b6d4);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          line-height: 1;
-        }
-        .countdown-label {
-          font-size: 0.65rem;
-          color: #6b7280;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-top: 0.25rem;
-        }
-        @media (min-width: 640px) {
-          .countdown-box {
-            width: 90px;
-            height: 100px;
-          }
-          .countdown-value {
-            font-size: 2.5rem;
-          }
-          .countdown-label {
-            font-size: 0.75rem;
-          }
-          .countdown-boxes {
-            gap: 1rem;
-          }
-        }
-
-        /* Main */
-        .main-content { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-        .termine-section { margin-bottom: 2rem; }
-        .section-title {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          font-size: 1.4rem;
-          font-weight: 700;
-          margin-bottom: 1.5rem;
-        }
-        .title-bar {
-          width: 4px;
-          height: 1.75rem;
-          border-radius: 2px;
-          background: linear-gradient(to bottom, var(--tw-gradient-from), var(--tw-gradient-to));
-        }
-        .termine-grid { display: flex; flex-direction: column; gap: 1.25rem; }
-
-        /* Animated Card with WORKING rotating border */
-        .animated-card {
-          position: relative;
-          border-radius: 1rem;
-          opacity: 0;
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
         @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
-        /* The glow behind */
-        .card-glow {
-          position: absolute;
-          inset: -2px;
-          border-radius: 1rem;
-          background: conic-gradient(from 0deg, #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff0080);
-          filter: blur(15px);
-          opacity: 0.3;
-          transition: opacity 0.6s ease, filter 0.6s ease;
-          z-index: 0;
-        }
-
-        /* The visible border */
-        .card-border {
-          position: absolute;
-          inset: 0;
-          border-radius: 1rem;
-          padding: 3px;
-          background: conic-gradient(from 0deg, #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff0080);
-          opacity: 0.7;
-          transition: opacity 0.6s ease;
-          z-index: 1;
-        }
-        .card-border::before {
-          content: '';
-          position: absolute;
-          inset: 3px;
-          background: #111;
-          border-radius: calc(1rem - 3px);
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes subtlePulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.6; }
-        }
-
-        .animated-card:hover .card-glow {
-          opacity: 0.55;
-          filter: blur(20px);
-        }
-        .animated-card:hover .card-border {
-          opacity: 1;
-        }
-
-        .card-content {
-          position: relative;
-          background: rgba(17, 17, 17, 0.98);
-          border-radius: calc(1rem - 3px);
-          padding: 1.5rem;
-          text-align: center;
-          z-index: 2;
-          margin: 3px;
-        }
-
-        .datum-text { font-size: 1rem; color: #06b6d4; margin-bottom: 0.5rem; }
-        .titel-text {
-          font-size: clamp(1.2rem, 4vw, 1.6rem);
-          font-weight: 800;
-          background: linear-gradient(135deg, #fff, #f0abfc, #06b6d4);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 0.5rem;
-          line-height: 1.3;
-        }
-        .beschreibung-text { font-size: 0.9rem; color: #a78bfa; margin-bottom: 0.5rem; font-style: italic; }
-        .ort-text { font-size: 0.9rem; color: #34d399; margin-bottom: 0.25rem; }
-        .zeit-text { font-size: 0.9rem; color: #fbbf24; }
-
-        /* Compact Cards */
-        .compact-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 0.75rem;
-        }
-        .compact-card {
-          position: relative;
-          border-radius: 0.75rem;
-          opacity: 0;
-          animation: fadeIn 0.4s ease-out forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        .compact-glow {
-          position: absolute;
-          inset: -1px;
-          border-radius: 0.75rem;
-          background: conic-gradient(from 0deg, #06b6d4, #a855f7, #ec4899, #06b6d4);
-          filter: blur(8px);
-          opacity: 0;
-          transition: opacity 0.3s;
-          z-index: 0;
-        }
-        .compact-border {
-          position: absolute;
-          inset: 0;
-          border-radius: 0.75rem;
-          padding: 2px;
-          background: linear-gradient(135deg, #333, #222);
-          transition: background 0.3s;
-          z-index: 1;
-        }
-        .compact-border::before {
-          content: '';
-          position: absolute;
-          inset: 2px;
-          background: #111;
-          border-radius: calc(0.75rem - 2px);
-        }
-        .compact-card:hover .compact-glow {
-          opacity: 0.4;
-        }
-        .compact-card:hover .compact-border {
-          background: linear-gradient(135deg, #06b6d4, #a855f7, #ec4899, #06b6d4);
-        }
-
-        .compact-content {
-          position: relative;
-          background: rgba(17, 17, 17, 0.95);
-          border-radius: calc(0.75rem - 2px);
-          padding: 0.875rem;
-          margin: 2px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.4rem;
-          align-items: center;
-          z-index: 2;
-        }
-        .compact-datum { font-size: 0.75rem; color: #9ca3af; width: 100%; }
-        .compact-titel { font-size: 0.95rem; font-weight: 600; color: white; flex: 1; }
-        .compact-ort { font-size: 0.7rem; color: #6b7280; }
-        .compact-zeit { font-size: 0.7rem; color: #06b6d4; }
-
-        /* Archive Button */
-        .archive-button {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 1rem 1.25rem;
-          background: rgba(25, 25, 25, 0.8);
-          border: 1px solid #333;
-          border-radius: 0.75rem;
-          color: #9ca3af;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-        .archive-button:hover {
-          background: rgba(35, 35, 35, 0.9);
-          border-color: #06b6d4;
-          color: white;
-        }
-
-        /* Footer */
-        .footer-section {
-          text-align: center;
-          padding: 2.5rem 1rem;
-          border-top: 1px solid #222;
-        }
-        .footer-gems { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-        .footer-author { font-size: 0.95rem; color: #9ca3af; margin-bottom: 0.25rem; }
-        .footer-powered { font-size: 0.8rem; color: #6b7280; }
-        .footer-link { color: #06b6d4; text-decoration: underline; }
-        .footer-link:hover { color: #22d3ee; }
-
-        @media (max-width: 640px) {
-          .card-content { padding: 1.25rem; }
-          .compact-grid { grid-template-columns: 1fr; }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>
