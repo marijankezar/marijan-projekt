@@ -328,17 +328,17 @@ export default function TerminePage() {
 
       <style jsx global>{`
 
-        /* ─── Page background: white → mint → teal → white ── */
+        /* ─── Page background: white → mint → teal → violet whisper ── */
         .termine-bg {
           background: linear-gradient(
             155deg,
             #ffffff        0%,
-            #f4fefb       15%,
-            #eafbf5       32%,
-            #e6faf8       50%,
-            #ecfdfc       66%,
-            #f2fffe       80%,
-            #f8ffff       92%,
+            #f4fefb       14%,
+            #eafbf5       30%,
+            #e6faf8       48%,
+            #ecfdfc       63%,
+            #f5f3ff       78%,
+            #faf8ff       90%,
             #ffffff       100%
           );
           min-height: 100vh;
@@ -360,6 +360,16 @@ export default function TerminePage() {
           background: radial-gradient(ellipse, rgba(8,145,178,0.06) 0%, transparent 70%);
           border-radius: 50%;
         }
+        /* subtle violet glow — bottom-left corner */
+        .hero-blob-2::after {
+          content: '';
+          position: fixed;
+          bottom: 0; left: 0;
+          width: 400px; height: 300px;
+          background: radial-gradient(ellipse, rgba(139,92,246,0.05) 0%, transparent 70%);
+          border-radius: 50%;
+          pointer-events: none;
+        }
 
         /* ─── Hero icon ─────────────────────────────────────── */
         .hero-icon-wrap {
@@ -368,8 +378,8 @@ export default function TerminePage() {
           justify-content: center;
           width: 64px; height: 64px;
           border-radius: 18px;
-          background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
-          box-shadow: 0 8px 28px rgba(13,148,136,0.28);
+          background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
+          box-shadow: 0 8px 28px rgba(13,148,136,0.22), 0 4px 16px rgba(124,58,237,0.18);
         }
 
         /* ─── Hero title ────────────────────────────────────── */
@@ -377,7 +387,7 @@ export default function TerminePage() {
           font-size: clamp(2.4rem, 8vw, 3.8rem);
           font-weight: 900;
           letter-spacing: -0.03em;
-          background: linear-gradient(135deg, #0f172a 30%, #0d9488 100%);
+          background: linear-gradient(135deg, #0f172a 25%, #0d9488 65%, #7c3aed 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -410,9 +420,9 @@ export default function TerminePage() {
         }
         .lang-btn:hover { color: #0d9488; }
         .lang-btn-active {
-          background: linear-gradient(135deg, #0d9488, #0891b2);
+          background: linear-gradient(135deg, #0d9488, #7c3aed);
           color: white !important;
-          box-shadow: 0 2px 10px rgba(13,148,136,0.3);
+          box-shadow: 0 2px 10px rgba(124,58,237,0.2), 0 2px 8px rgba(13,148,136,0.2);
         }
 
         /* ─── Animated card border (@property) ─────────────── */
@@ -431,21 +441,22 @@ export default function TerminePage() {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           border-radius: 16px;
-          box-shadow: 0 2px 8px rgba(13,148,136,0.06), 0 0 0 1px rgba(13,148,136,0.08);
+          box-shadow: 0 2px 12px rgba(13,148,136,0.07), 0 1px 3px rgba(0,0,0,0.04);
         }
         .ms-card::before {
           content: '';
           position: absolute;
           inset: 0;
           border-radius: 16px;
-          padding: 1.5px;
+          padding: 2px;
           background: conic-gradient(
             from var(--ba),
             #0d9488,
             #06b6d4,
+            #8b5cf6,
             #0891b2,
+            #7c3aed,
             #34d399,
-            #059669,
             #0d9488
           );
           -webkit-mask:
@@ -453,17 +464,17 @@ export default function TerminePage() {
             linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
           mask-composite: exclude;
-          animation: border-spin 7s linear infinite;
-          opacity: 0.22;
-          transition: opacity 0.4s ease;
+          animation: border-spin 5s linear infinite;
+          opacity: 0.45;
+          transition: opacity 0.35s ease;
         }
         .ms-card:hover::before {
-          opacity: 0.65;
-          animation-duration: 2.8s;
+          opacity: 0.82;
+          animation-duration: 2.2s;
         }
         .ms-card-countdown::before {
-          animation-duration: 5s;
-          opacity: 0.18;
+          animation-duration: 4s;
+          opacity: 0.38;
         }
 
         /* ─── Countdown boxes ───────────────────────────────── */
@@ -528,7 +539,7 @@ export default function TerminePage() {
         .section-bar {
           width: 3px; height: 16px;
           border-radius: 2px;
-          background: linear-gradient(to bottom, #0d9488, #0891b2);
+          background: linear-gradient(to bottom, #0d9488, #7c3aed);
           flex-shrink: 0;
         }
         .section-count {
