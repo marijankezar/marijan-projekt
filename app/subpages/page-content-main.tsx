@@ -1,7 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import MovieList from './movie-component';
 import NotenList from './noten-component';
+
+const ToolsSection = dynamic(() => import('./tools-section'), { ssr: false, loading: () => null });
 
 export default function MyMainContent() {
   return (
@@ -47,12 +50,8 @@ export default function MyMainContent() {
       {/* Gesangsnoten */}
       <NotenList />
 
-      {/* Horizontale Trennlinie */}
-      <div className="relative my-6">
-        <div className="living-line border-t-4 border-gray-600">
-          <div className="scan-light"></div>
-        </div>
-      </div>
+      {/* Tools & Features — client-only, no SSR to avoid hydration mismatch */}
+      <ToolsSection />
     </div>
   );
 }
