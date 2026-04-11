@@ -1,22 +1,6 @@
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* hilis.css — Animations & UI-Effekte
+   Wichtig: :root, body und Tailwind-Imports sind in globals.css —
+   hier nur Animations-Klassen und Komponenten-Effekte. */
 
 
 
@@ -31,6 +15,12 @@ body {
    rgba(229, 231, 235, 0.9) 100%);
   background-size: 200% 100%;
   animation: shimmerBg 10s infinite linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-bg {
+    animation: none;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -93,6 +83,15 @@ Erklärung der Animationen
   background: linear-gradient(90deg, rgba(59, 130, 246, 0) 0%, rgba(59, 130, 246, 0.5) 50%, rgba(59, 130, 246, 0) 100%);
   background-size: 200px 100%;
   animation: shimmer 2s infinite linear, pulseGlow 2.5s infinite alternate, wave 3s infinite ease-in-out;
+ }
+
+ @media (prefers-reduced-motion: reduce) {
+   .living-line {
+     animation: none;
+   }
+   .living-line .scan-light {
+     animation: none;
+   }
  }
 
  @media (prefers-color-scheme: dark) {
@@ -192,6 +191,13 @@ Erklärung der Animationen
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient,
+  .animate-pulse-slow {
+    animation: none;
+  }
+}
+
 
 
 
@@ -226,6 +232,14 @@ Erklärung der Animationen
   background: linear-gradient(to right, transparent, #374151, transparent);
   animation: moveLine 5s linear infinite;
   opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-line {
+    animation: none;
+    left: 0;
+    opacity: 0.3;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -271,6 +285,13 @@ Erklärung der Animationen
    rgba(59, 130, 246, 0.1) 100%);
   background-size: 200% 100%;
   animation: shimmer 5s infinite linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeInUp,
+  .shimmer-bg-Dropdown-Button {
+    animation: none;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

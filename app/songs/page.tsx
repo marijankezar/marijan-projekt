@@ -140,17 +140,41 @@ export default function SongsPage() {
         .chevron.open {
           transform: rotate(180deg);
         }
+
+        /* Animationen bei prefers-reduced-motion deaktivieren (WCAG 2.3.3) */
+        @media (prefers-reduced-motion: reduce) {
+          .search-container,
+          .search-container.focused,
+          .search-container::before,
+          .music-note {
+            animation: none !important;
+          }
+          .accordion-content {
+            transition: none;
+          }
+          .chevron {
+            transition: none;
+          }
+          .search-container {
+            background: #3b82f6;
+          }
+          .search-container.focused {
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.6);
+          }
+        }
       `}</style>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-block mb-4">
+          <div className="inline-block mb-4" aria-hidden="true">
             <svg
               className="w-16 h-16 mx-auto text-purple-500 music-note"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
             >
               <path
                 strokeLinecap="round"
@@ -173,21 +197,29 @@ export default function SongsPage() {
           <div className={`search-container max-w-xl mx-auto ${isFocused ? 'focused' : ''}`}>
             <div className="search-inner">
               <div className="relative">
+                <label htmlFor="songs-search" className="sr-only">
+                  Pesem iskati (Lied suchen)
+                </label>
                 <input
-                  type="text"
-                  placeholder="Išči pesem..."
+                  id="songs-search"
+                  type="search"
+                  placeholder="Išči pesem…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  className="w-full px-5 py-4 pl-14 bg-transparent text-white focus:outline-none text-lg placeholder-gray-400"
+                  className="w-full px-5 py-4 pl-14 bg-transparent text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-[0.85rem] text-lg placeholder-gray-400"
+                  aria-label="Lied suchen"
+                  autoComplete="off"
                 />
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2" aria-hidden="true">
                   <svg
                     className={`w-6 h-6 transition-colors duration-300 ${isFocused ? 'text-purple-500' : 'text-gray-400'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
                   >
                     <path
                       strokeLinecap="round"
@@ -200,9 +232,10 @@ export default function SongsPage() {
                 {search && (
                   <button
                     onClick={() => setSearch('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    aria-label="Suche zurücksetzen"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors rounded focus-visible:outline-2 focus-visible:outline-white"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -210,7 +243,11 @@ export default function SongsPage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+          <p
+            className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {songs.length} pesmi v zbirki
           </p>
         </div>
@@ -221,10 +258,12 @@ export default function SongsPage() {
             {/* Accordion Header */}
             <button
               onClick={() => setIsListOpen(!isListOpen)}
-              className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all"
+              aria-expanded={isListOpen}
+              aria-controls="song-list-content"
+              className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
             >
               <div className="flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 <span className="text-lg font-semibold">
@@ -236,13 +275,20 @@ export default function SongsPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {/* Accordion Content */}
-            <div className={`accordion-content ${isListOpen ? 'open' : ''}`}>
+            <div
+              id="song-list-content"
+              className={`accordion-content ${isListOpen ? 'open' : ''}`}
+              role="region"
+              aria-label="Liederliste"
+            >
               <div className="p-4 max-h-[60vh] overflow-y-auto">
                 {loading ? (
                   <div className="text-center py-8">
@@ -258,13 +304,15 @@ export default function SongsPage() {
                       <li key={song.id}>
                         <button
                           onClick={() => loadSong(song.id)}
-                          className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                          aria-pressed={selectedSong?.id === song.id}
+                          aria-label={`${song.title}${song.author && song.author !== 'Unbekannt' ? ` von ${song.author}` : ''}`}
+                          className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 focus-visible:outline-2 focus-visible:outline-purple-500 focus-visible:outline-offset-1 ${
                             selectedSong?.id === song.id
                               ? 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-800 dark:text-purple-200'
                               : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                           }`}
                         >
-                          <span className="text-xs text-gray-400 w-8">{index + 1}.</span>
+                          <span className="text-xs text-gray-400 w-8" aria-hidden="true">{index + 1}.</span>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{song.title}</div>
                             {song.author && song.author !== 'Unbekannt' && (
@@ -274,7 +322,7 @@ export default function SongsPage() {
                             )}
                           </div>
                           {selectedSong?.id === song.id && (
-                            <svg className="w-5 h-5 text-purple-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-purple-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                             </svg>
                           )}
@@ -344,7 +392,7 @@ export default function SongsPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
 
       <MyFooter />
     </div>

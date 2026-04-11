@@ -23,9 +23,10 @@ export default function Logo() {
       target="_blank"
       rel="noopener noreferrer"
       className="mk-logo"
-      aria-label="kežar.at"
+      aria-label="kežar.at — Homepage (öffnet in neuem Tab)"
     >
-      <span className="mk-logo-text">
+      {/* Alle visuellen Spans sind dekorativ — Screenreader liest aria-label */}
+      <span className="mk-logo-text" aria-hidden="true">
         {chars.map((c, i) => (
           <span
             key={i}
@@ -37,11 +38,11 @@ export default function Logo() {
         ))}
       </span>
 
-      {/* Scan light across the logo */}
-      <span className="mk-scan" />
+      {/* Scan light across the logo — dekorativ */}
+      <span className="mk-scan" aria-hidden="true" />
 
-      {/* Hover underline */}
-      <span className="mk-line" />
+      {/* Hover underline — dekorativ */}
+      <span className="mk-line" aria-hidden="true" />
 
       <style jsx>{`
         .mk-logo {
@@ -84,6 +85,18 @@ export default function Logo() {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        /* Reduced motion: sofort einblenden ohne Slide-Animation (WCAG 2.3.3) */
+        @media (prefers-reduced-motion: reduce) {
+          .mk-ch {
+            animation: none;
+            opacity: 1;
+            transform: none;
+          }
+          .mk-scan {
+            animation: none;
           }
         }
 
@@ -174,6 +187,12 @@ export default function Logo() {
         @keyframes mkScan {
           0% { left: -40%; }
           100% { left: 140%; }
+        }
+
+        /* Fokus-Stil für Tastaturnutzer (WCAG 2.4.7) */
+        .mk-logo:focus-visible {
+          outline: 2px solid #3b82f6;
+          outline-offset: 3px;
         }
 
         /* ---- Hover underline ---- */

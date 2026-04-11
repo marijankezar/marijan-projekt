@@ -29,11 +29,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Fehler beim Abrufen der Stundenbuchungen:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-    return NextResponse.json({
-      error: 'Fehler beim Laden der Stundenbuchungen',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Fehler beim Laden der Stundenbuchungen' }, { status: 500 });
   }
 }
 
@@ -135,11 +131,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Speichern der Stundenbuchung:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-    return NextResponse.json({
-      error: 'Fehler beim Speichern',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Fehler beim Speichern' }, { status: 500 });
   }
 }
 
@@ -183,11 +175,7 @@ export async function PUT(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-    return NextResponse.json({
-      error: 'Fehler beim Aktualisieren',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Fehler beim Aktualisieren' }, { status: 500 });
   }
 }
 
@@ -219,10 +207,6 @@ export async function DELETE(request: Request) {
 
   } catch (error) {
     console.error('Fehler beim Löschen:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-    return NextResponse.json({
-      error: 'Fehler beim Löschen',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Fehler beim Löschen' }, { status: 500 });
   }
 }

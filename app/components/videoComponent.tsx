@@ -18,7 +18,9 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
           if (entry.isIntersecting) {
             const iframe = document.createElement('iframe');
             iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-            iframe.title = 'YouTube video';
+            // Aussagekräftiger Titel mit Videobeschreibung (WCAG 4.1.2)
+            iframe.title = `YouTube-Video: ${videoDescr}`;
+            iframe.setAttribute('aria-label', `YouTube-Video: ${videoDescr}`);
             iframe.allow =
               'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
             iframe.allowFullscreen = true;
@@ -27,7 +29,8 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
             iframe.onerror = () => {
               while (container.firstChild) container.removeChild(container.firstChild);
               const wrapper = document.createElement('div');
-              wrapper.className = 'absolute inset-0 flex items-center justify-center text-center bg-gray-900 text-white p-4';
+              wrapper.className =
+                'absolute inset-0 flex items-center justify-center text-center bg-gray-900 text-white p-4';
               const inner = document.createElement('div');
               const p = document.createElement('p');
               p.className = 'text-gray-300';
@@ -37,7 +40,8 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
               a.target = '_blank';
               a.rel = 'noopener noreferrer';
               a.className = 'underline text-cyan-400 mt-2 inline-block hover:text-cyan-300';
-              a.textContent = 'Poglej na YouTube';
+              a.textContent = `${videoDescr} – Auf YouTube ansehen`;
+              a.setAttribute('aria-label', `${videoDescr} auf YouTube ansehen (öffnet in neuem Tab)`);
               inner.appendChild(p);
               inner.appendChild(a);
               wrapper.appendChild(inner);
@@ -55,25 +59,36 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ videoId, videoDescr }) 
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, [videoId]);
+  }, [videoId, videoDescr]);
 
   return (
     <div className="group">
       <div
         className="video-container relative w-full pt-[56.25%] overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-xl shadow-lg ring-1 ring-gray-300 dark:ring-white/10 transition-all duration-300 group-hover:ring-indigo-500/50 dark:group-hover:ring-purple-500/50 group-hover:shadow-indigo-500/20 dark:group-hover:shadow-purple-500/20"
         data-id={videoId}
+        role="img"
+        aria-label={`Vorschaubild: ${videoDescr}`}
       >
         <img
           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-          alt={`Video: ${videoDescr}`}
+          alt={`Vorschaubild für: ${videoDescr}`}
           loading="lazy"
           className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Play-Button Overlay — semantische Schaltfläche (WCAG 2.1.1, 4.1.2) */}
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          aria-hidden="true"
+        >
           <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
+            <svg
+              className="w-8 h-8 text-gray-900 ml-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M8 5v14l11-7z" />
             </svg>
           </div>
         </div>

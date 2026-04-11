@@ -1,5 +1,30 @@
+# Build-Outputs (nie in Docker-Context kopieren)
 .next
 node_modules
+
+# Secrets
 .env
 .env.*
+
+# Versionskontrolle
 .git
+.gitignore
+
+# Logs (ändern sich ständig → invalidieren Docker-Cache unnötig)
+logs/
+*.log
+
+# Dev-Tooling (nicht für Prod-Build benötigt)
+OFF_*.ts
+OFF_*.js
+OFF_next.config.ts
+rebuild.sh
+
+# Schema-Snapshots (nur für Entwicklungsreferenz)
+db_timebook_schema.json
+
+# IDE / macOS
+.DS_Store
+.idea/
+.vscode/
+*.swp

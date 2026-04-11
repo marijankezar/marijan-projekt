@@ -28,6 +28,7 @@ export const videoGroups = [
   { label: 'Kult', value: 25 },
   { label: 'Dečle Danica', value: 26 },
   { label: 'Povezave', value: 27 },
+  { label: 'Sport Matej', value: 28 },
 ];
 
 export const videoDataMap: Record<number, string[]> = {
@@ -176,4 +177,6 @@ export const videoDataMap: Record<number, string[]> = {
   26: ['h5HEwBEIa2c'],
   // Povezave (keine gültigen Video-IDs, nur externe Links)
   27: [],
+  // Sport Matej
+  28: ['v1B4a4x3JKE'],
 };

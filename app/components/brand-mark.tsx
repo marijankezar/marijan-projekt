@@ -7,13 +7,14 @@ export default function BrandMark() {
       target="_blank"
       rel="noopener noreferrer"
       className="bm"
-      aria-label="Marijan Kežar - Web Development"
+      aria-label="Marijan Kežar — Web Development (öffnet in neuem Tab)"
     >
+      {/* Alle visuellen Spans sind dekorativ — Screenreader liest aria-label */}
       {/* Ring */}
-      <span className="bm-ring" />
+      <span className="bm-ring" aria-hidden="true" />
 
       {/* Badge */}
-      <span className="bm-inner">
+      <span className="bm-inner" aria-hidden="true">
         {/* Background: Marijan */}
         <span className="bm-bg-name">Marijan</span>
 
@@ -28,10 +29,10 @@ export default function BrandMark() {
       </span>
 
       {/* Hover underline */}
-      <span className="bm-line" />
+      <span className="bm-line" aria-hidden="true" />
 
       {/* Accent dot */}
-      <span className="bm-dot" />
+      <span className="bm-dot" aria-hidden="true" />
 
       <style jsx>{`
         .bm {
@@ -157,6 +158,31 @@ export default function BrandMark() {
           100% { background-position: -100% 0; }
         }
 
+        /* Fokus-Stil für Tastatur-Navigation (WCAG 2.4.7) */
+        .bm:focus-visible {
+          outline: 2px solid #3b82f6;
+          outline-offset: 4px;
+          border-radius: 14px;
+        }
+
+        /* Reduced motion: Shimmer und Pulse stoppen (WCAG 2.3.3) */
+        @media (prefers-reduced-motion: reduce) {
+          .bm-fg-z {
+            animation: none;
+            background-position: 0 0;
+          }
+          .bm-dot {
+            animation: none;
+            opacity: 0.8;
+          }
+          .bm,
+          .bm-inner,
+          .bm-ring,
+          .bm-line {
+            transition: none;
+          }
+        }
+
         /* ---- Hover underline ---- */
         .bm-line {
           position: absolute;
@@ -199,7 +225,7 @@ export default function BrandMark() {
         }
 
         @keyframes bmPulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
+          0%, 100% { opacity: 0.7; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.15); }
         }
 
