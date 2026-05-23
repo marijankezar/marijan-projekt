@@ -1,16 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer, ReferenceLine,
-} from 'recharts';
+import ReactECharts from 'echarts-for-react';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 type PricePoint = {
-  date: string; close: number;
+  date: string; open: number; high: number; low: number; close: number;
   sma20: number | null; sma50: number | null;
   bb_upper: number | null; bb_lower: number | null;
   macd: number; macd_sig: number;
@@ -74,39 +71,192 @@ function konfidenzColor(k: number) {
   return 'bg-gray-400';
 }
 
-function formatDate(dateStr: string, range: string) {
-  const d = new Date(dateStr);
-  if (range === '1w') return d.toLocaleDateString('de-AT', { weekday: 'short', day: 'numeric', month: 'short' });
-  if (range === '5y') return d.toLocaleDateString('de-AT', { month: 'short', year: '2-digit' });
-  return d.toLocaleDateString('de-AT', { day: 'numeric', month: 'short' });
-}
+function buildEChartsOption(
+  prices: PricePoint[],
+  showBB: boolean,
+  sma200: number | null,
+  isDark: boolean,
+) {
+  const dates  = prices.map(p => p.date);
+  const ohlc   = prices.map(p => [p.open, p.close, p.low, p.high]);
+  const closes = prices.map(p => p.close);
+  const sma20  = prices.map(p => p.sma20);
+  const sma50  = prices.map(p => p.sma50);
+  const bbUp   = prices.map(p => p.bb_upper);
+  const bbLo   = prices.map(p => p.bb_lower);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-xl text-sm min-w-[160px]">
-      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{label}</p>
-      {payload.map((e: { name: string; value: number; color: string }) => e.value != null && (
-        <p key={e.name} style={{ color: e.color }}>
-          {e.name}: <span className="font-bold">${e.value?.toLocaleString('de-AT', { minimumFractionDigits: 2 })}</span>
-        </p>
-      ))}
-    </div>
-  );
+  const textColor  = isDark ? '#9ca3af' : '#6b7280';
+  const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const bgColor    = 'transparent';
+  const tooltipBg  = isDark ? '#1f2937' : '#ffffff';
+  const tooltipBdr = isDark ? '#374151' : '#e5e7eb';
+
+  const series: object[] = [
+    {
+      name: 'Gold',
+      type: 'candlestick',
+      data: ohlc,
+      itemStyle: {
+        color: '#22c55e',        // bullish Kerze
+        color0: '#ef4444',       // bearish Kerze
+        borderColor: '#16a34a',
+        borderColor0: '#dc2626',
+      },
+      z: 10,
+    },
+    {
+      name: 'SMA 20',
+      type: 'line',
+      data: sma20,
+      smooth: true,
+      symbol: 'none',
+      lineStyle: { color: '#3b82f6', width: 1.5, type: 'dashed' },
+      z: 5,
+    },
+    {
+      name: 'SMA 50',
+      type: 'line',
+      data: sma50,
+      smooth: true,
+      symbol: 'none',
+      lineStyle: { color: '#ef4444', width: 1.5, type: 'dashed' },
+      z: 5,
+    },
+  ];
+
+  if (sma200 != null) {
+    series.push({
+      name: 'SMA 200',
+      type: 'line',
+      data: closes.map(() => sma200),
+      symbol: 'none',
+      lineStyle: { color: '#10b981', width: 1.5, type: 'dotted' },
+      z: 4,
+    });
+  }
+
+  if (showBB) {
+    series.push(
+      {
+        name: 'BB Oben',
+        type: 'line',
+        data: bbUp,
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { color: '#8b5cf6', width: 1, type: 'dashed', opacity: 0.6 },
+        z: 3,
+      },
+      {
+        name: 'BB Unten',
+        type: 'line',
+        data: bbLo,
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { color: '#8b5cf6', width: 1, type: 'dashed', opacity: 0.6 },
+        areaStyle: { color: 'rgba(139,92,246,0.04)' },
+        z: 3,
+      },
+    );
+  }
+
+  return {
+    backgroundColor: bgColor,
+    animation: false,
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'cross', crossStyle: { color: textColor } },
+      backgroundColor: tooltipBg,
+      borderColor: tooltipBdr,
+      borderWidth: 1,
+      textStyle: { color: isDark ? '#f3f4f6' : '#111827', fontSize: 12 },
+      formatter: (params: { seriesName: string; value: number | number[] }[]) => {
+        const candle = params.find(p => p.seriesName === 'Gold');
+        if (!candle || !Array.isArray(candle.value)) return '';
+        const [o, c, l, h] = candle.value as number[];
+        const idx = (params[0] as unknown as { dataIndex: number })?.dataIndex ?? 0;
+        const date = dates[idx] ?? '';
+        const pct = o ? (((c - o) / o) * 100).toFixed(2) : '0.00';
+        const color = c >= o ? '#22c55e' : '#ef4444';
+        let html = `<div style="font-size:11px;color:${textColor};margin-bottom:4px">${date}</div>`;
+        html += `<div style="margin-bottom:6px"><b style="color:${color}">${c >= o ? '▲' : '▼'} $${c.toLocaleString('de-AT', { minimumFractionDigits: 2 })} (${pct}%)</b></div>`;
+        html += `<div style="font-size:11px;color:${textColor}">O: $${o.toLocaleString('de-AT', { minimumFractionDigits: 2 })} &nbsp; H: $${h.toLocaleString('de-AT', { minimumFractionDigits: 2 })}</div>`;
+        html += `<div style="font-size:11px;color:${textColor}">L: $${l.toLocaleString('de-AT', { minimumFractionDigits: 2 })} &nbsp; C: $${c.toLocaleString('de-AT', { minimumFractionDigits: 2 })}</div>`;
+        for (const p of params) {
+          if (p.seriesName === 'Gold' || p.seriesName === 'BB Unten') continue;
+          if (p.value == null) continue;
+          const v = Array.isArray(p.value) ? null : p.value as number;
+          if (v == null) continue;
+          html += `<div style="font-size:11px;color:${textColor};margin-top:2px">${p.seriesName}: $${v.toLocaleString('de-AT', { minimumFractionDigits: 2 })}</div>`;
+        }
+        return html;
+      },
+    },
+    legend: {
+      data: showBB
+        ? ['Gold', 'SMA 20', 'SMA 50', 'SMA 200', 'BB Oben', 'BB Unten']
+        : ['Gold', 'SMA 20', 'SMA 50', 'SMA 200'],
+      bottom: 0,
+      textStyle: { color: textColor, fontSize: 11 },
+      icon: 'roundRect',
+      itemHeight: 3,
+    },
+    grid: { top: 12, right: 12, bottom: 60, left: 70 },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textColor, fontSize: 11, margin: 8 },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      scale: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: textColor, fontSize: 11,
+        formatter: (v: number) => `$${v.toLocaleString('de-AT')}`,
+      },
+      splitLine: { lineStyle: { color: gridColor } },
+    },
+    dataZoom: [
+      { type: 'inside', start: 0, end: 100 },
+      {
+        type: 'slider',
+        bottom: 22,
+        height: 20,
+        borderColor: gridColor,
+        backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+        fillerColor: isDark ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.1)',
+        handleStyle: { color: '#f59e0b' },
+        textStyle: { color: textColor, fontSize: 10 },
+      },
+    ],
+    series,
+  };
 }
 
 export default function GoldPageClient() {
   const router = useRouter();
-  const [range, setRange] = useState('1y');
-  const [chartData, setChartData] = useState<ChartData | null>(null);
-  const [prognose, setPrognose] = useState<Prognose | null>(null);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [range, setRange]           = useState('1y');
+  const [chartData, setChartData]   = useState<ChartData | null>(null);
+  const [prognose, setPrognose]     = useState<Prognose | null>(null);
+  const [chartLoading, setChartLoading]     = useState(true);
   const [prognoseLoading, setPrognoseLoading] = useState(true);
-  const [chartError, setChartError] = useState('');
+  const [chartError, setChartError]   = useState('');
   const [prognoseError, setPrognoseError] = useState('');
-  const [showBB, setShowBB] = useState(false);
+  const [showBB, setShowBB]           = useState(false);
   const [activeHorizont, setActiveHorizont] = useState('30d');
+  const [isDark, setIsDark]           = useState(false);
+  const chartRef = useRef<ReactECharts>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const loadChart = useCallback(async (r: string) => {
     setChartLoading(true); setChartError('');
@@ -132,7 +282,7 @@ export default function GoldPageClient() {
     finally { setPrognoseLoading(false); }
   }, []);
 
-useEffect(() => { loadChart(range); }, [range, loadChart]);
+  useEffect(() => { loadChart(range); }, [range, loadChart]);
   useEffect(() => { loadPrognose(); }, [loadPrognose]);
 
   const trendColor =
@@ -145,14 +295,11 @@ useEffect(() => { loadChart(range); }, [range, loadChart]);
     : (chartData?.rsi ?? 50) <= 30 ? 'text-green-600 dark:text-green-400'
     : 'text-amber-600 dark:text-amber-400';
 
-  const ticks = chartData ? (() => {
-    const pts = chartData.prices;
-    if (pts.length <= 6) return pts.map(p => p.date);
-    const step = Math.ceil(pts.length / 6);
-    return pts.filter((_, i) => i % step === 0).map(p => p.date);
-  })() : [];
-
   const activeH = prognose?.zeithorizonte?.[activeHorizont];
+
+  const echartsOption = chartData
+    ? buildEChartsOption(chartData.prices, showBB, prognose?.technisch.sma200 ?? null, isDark)
+    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
@@ -205,7 +352,7 @@ useEffect(() => { loadChart(range); }, [range, loadChart]);
                   {chartData.trend === 'bullish' ? 'Bullish' : chartData.trend === 'bearish' ? 'Bearish' : 'Neutral'}
                 </span>
                 {chartData.rsi != null && (
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30`}>
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30">
                     RSI <span className={rsiColor}>{chartData.rsi}</span>
                   </span>
                 )}
@@ -222,7 +369,10 @@ useEffect(() => { loadChart(range); }, [range, loadChart]);
         {/* Chart */}
         <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Kursverlauf</h2>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Kursverlauf</h2>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Scrollen zum Zoomen · Ziehen zum Verschieben</p>
+            </div>
             <div className="flex flex-wrap gap-2 items-center">
               <button
                 onClick={() => setShowBB(!showBB)}
@@ -245,27 +395,17 @@ useEffect(() => { loadChart(range); }, [range, loadChart]);
           </div>
 
           {chartLoading ? (
-            <div className="h-80 flex items-center justify-center"><RefreshCw className="w-8 h-8 text-amber-500 animate-spin" /></div>
+            <div className="h-96 flex items-center justify-center"><RefreshCw className="w-8 h-8 text-amber-500 animate-spin" /></div>
           ) : chartError ? (
-            <div className="h-80 flex items-center justify-center gap-2 text-red-500"><AlertTriangle className="w-5 h-5" /><span>{chartError}</span></div>
-          ) : chartData ? (
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={chartData.prices} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(156,163,175,0.2)" />
-                <XAxis dataKey="date" ticks={ticks} tickFormatter={d => formatDate(d, range)}
-                  tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false} tickLine={false} tickFormatter={v => `$${v.toLocaleString()}`} width={75} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '16px' }} />
-                {showBB && <Line type="monotone" dataKey="bb_upper" name="BB Oben" stroke="#8b5cf6" strokeWidth={1} strokeDasharray="2 3" dot={false} connectNulls />}
-                {showBB && <Line type="monotone" dataKey="bb_lower" name="BB Unten" stroke="#8b5cf6" strokeWidth={1} strokeDasharray="2 3" dot={false} connectNulls />}
-                <Line type="monotone" dataKey="sma20" name="SMA 20" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
-                <Line type="monotone" dataKey="sma50" name="SMA 50" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
-                <Line type="monotone" dataKey="close" name="Gold (USD)" stroke="#f59e0b" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#f59e0b' }} />
-                {prognose?.technisch.sma200 && <ReferenceLine y={prognose.technisch.sma200} stroke="#10b981" strokeDasharray="6 3" label={{ value: 'SMA200', fill: '#10b981', fontSize: 10 }} />}
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="h-96 flex items-center justify-center gap-2 text-red-500"><AlertTriangle className="w-5 h-5" /><span>{chartError}</span></div>
+          ) : echartsOption ? (
+            <ReactECharts
+              ref={chartRef}
+              option={echartsOption}
+              style={{ height: 420 }}
+              notMerge
+              lazyUpdate={false}
+            />
           ) : null}
         </div>
 

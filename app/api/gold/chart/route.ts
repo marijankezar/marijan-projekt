@@ -96,10 +96,27 @@ export async function GET(req: NextRequest) {
 
     // Display-Daten (für Chart)
     const dispTs: number[] = displayResult.timestamp ?? [];
-    const dispCloses: number[] = displayResult.indicators?.quote?.[0]?.close ?? [];
+    const q = displayResult.indicators?.quote?.[0] ?? {};
+    const dispOpens:  number[] = q.open  ?? [];
+    const dispHighs:  number[] = q.high  ?? [];
+    const dispLows:   number[] = q.low   ?? [];
+    const dispCloses: number[] = q.close ?? [];
+
+    const isIntraday = interval === '1h';
     const displayPrices = dispTs
-      .map((ts, i) => ({ date: new Date(ts * 1000).toISOString().split('T')[0], close: dispCloses[i] ?? null }))
-      .filter(p => p.close != null) as { date: string; close: number }[];
+      .map((ts, i) => {
+        const o = dispOpens[i];
+        const h = dispHighs[i];
+        const l = dispLows[i];
+        const c = dispCloses[i];
+        if (c == null) return null;
+        const dateObj = new Date(ts * 1000);
+        const date = isIntraday
+          ? dateObj.toISOString().slice(0, 16).replace('T', ' ')
+          : dateObj.toISOString().split('T')[0];
+        return { date, open: o ?? c, high: h ?? c, low: l ?? c, close: c };
+      })
+      .filter(Boolean) as { date: string; open: number; high: number; low: number; close: number }[];
 
     const dispValues = displayPrices.map(p => p.close);
     const dispSma20 = calcSMA(dispValues, 20);
