@@ -12,13 +12,13 @@ const RANGE_MAP: Record<string, { range: string; interval: string }> = {
   '5y': { range: '5y',  interval: '1wk' },
 };
 
-export function calcSMA(closes: number[], period: number): (number | null)[] {
+function calcSMA(closes: number[], period: number): (number | null)[] {
   return closes.map((_, i) =>
     i < period - 1 ? null : closes.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) / period
   );
 }
 
-export function calcEMA(closes: number[], period: number): number[] {
+function calcEMA(closes: number[], period: number): number[] {
   const k = 2 / (period + 1);
   const ema: number[] = [];
   for (let i = 0; i < closes.length; i++) {
@@ -28,7 +28,7 @@ export function calcEMA(closes: number[], period: number): number[] {
   return ema;
 }
 
-export function calcMACD(closes: number[]) {
+function calcMACD(closes: number[]) {
   const ema12 = calcEMA(closes, 12);
   const ema26 = calcEMA(closes, 26);
   const macdLine = ema12.map((v, i) => v - ema26[i]);
@@ -37,7 +37,7 @@ export function calcMACD(closes: number[]) {
   return { macdLine, signalLine, histogram };
 }
 
-export function calcRSI(closes: number[], period = 14): number | null {
+function calcRSI(closes: number[], period = 14): number | null {
   if (closes.length < period + 1) return null;
   const recent = closes.slice(-period - 1);
   let gains = 0, losses = 0;
@@ -51,7 +51,7 @@ export function calcRSI(closes: number[], period = 14): number | null {
   return Math.round(100 - 100 / (1 + avgGain / avgLoss));
 }
 
-export function calcBollingerBands(closes: number[], period = 20, mult = 2) {
+function calcBollingerBands(closes: number[], period = 20, mult = 2) {
   return closes.map((_, i) => {
     if (i < period - 1) return { upper: null, middle: null, lower: null };
     const slice = closes.slice(i - period + 1, i + 1);
@@ -61,7 +61,7 @@ export function calcBollingerBands(closes: number[], period = 20, mult = 2) {
   });
 }
 
-export function calcATR(closes: number[], period = 14): number {
+function calcATR(closes: number[], period = 14): number {
   if (closes.length < 2) return 0;
   const trs = closes.slice(1).map((c, i) => Math.abs(c - closes[i]));
   const recent = trs.slice(-period);
