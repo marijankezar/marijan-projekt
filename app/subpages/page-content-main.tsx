@@ -1,10 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import MovieList from './movie-component';
-import NotenList from './noten-component';
 
-const ToolsSection = dynamic(() => import('./tools-section'), { ssr: false, loading: () => null });
+const MovieList    = dynamic(() => import('./movie-component'),  { ssr: false, loading: () => null });
+const NotenList    = dynamic(() => import('./noten-component'),  { ssr: false, loading: () => null });
+const ToolsSection = dynamic(() => import('./tools-section'),    { ssr: false, loading: () => null });
 
 export default function MyMainContent() {
   return (

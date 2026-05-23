@@ -20,6 +20,39 @@ export default function ToolsSection() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Gold Card */}
+          <div className="group relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-500/30 transition-all duration-300 p-6 flex flex-col gap-3">
+            <Link href="/gold" className="absolute inset-0 z-20 rounded-2xl" aria-label="Gold Chart öffnen" />
+
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/0 to-amber-600/0 group-hover:from-yellow-400/5 group-hover:to-amber-600/5 transition-all duration-300 rounded-2xl" />
+
+            <div className="relative z-10 flex items-start justify-between">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white text-base font-bold">Au</span>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 dark:text-gray-600 group-hover:text-amber-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+              </svg>
+            </div>
+
+            <div className="relative z-10">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                Gold Chart & Prognose
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                Aktueller XAU/USD Kurs · Technische Analyse · KI-Prognose
+              </p>
+            </div>
+
+            <div className="relative z-10 flex flex-wrap gap-1.5 mt-1">
+              {["Live-Kurs", "RSI", "SMA", "KI-Analyse"].map(tag => (
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 font-medium">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
           {/* Atomuhr Card */}
           <div className="group relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 p-6 flex flex-col gap-3">
             <Link href="/uhr" className="absolute inset-0 z-20 rounded-2xl" aria-label="Kežar Atomuhr öffnen" />

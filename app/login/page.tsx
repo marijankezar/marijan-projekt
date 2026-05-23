@@ -118,13 +118,12 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p
-          className="block text-center text-sm font-semibold text-gray-500 dark:text-gray-400 sm:text-base cursor-default"
-          aria-label="Passwort vergessen? Bitte kontaktiere den Administrator."
-          title="Bitte kontaktiere den Administrator"
+        <Link
+          href="/forgot-password"
+          className="block text-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 sm:text-base hover:underline underline-offset-4 transition-colors"
         >
           PASSWORT VERGESSEN?
-        </p>
+        </Link>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 sm:text-base">
           Kein Konto?{' '}
