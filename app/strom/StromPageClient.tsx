@@ -144,9 +144,9 @@ export default function StromPageClient() {
   const [error,   setError]   = useState('');
   const [isDark,  setIsDark]  = useState(false);
 
-  // Datetime-Range-Picker state
-  const [inputFrom,   setInputFrom]   = useState('');
-  const [inputTo,     setInputTo]     = useState('');
+  // Datetime-Range-Picker state — defaults: heute 00:00 – 23:45
+  const [inputFrom,   setInputFrom]   = useState(() => `${todayStr()}T00:00`);
+  const [inputTo,     setInputTo]     = useState(() => `${todayStr()}T23:45`);
   const [appliedFrom, setAppliedFrom] = useState('');
   const [appliedTo,   setAppliedTo]   = useState('');
   const isCustom = !!(appliedFrom && appliedTo);
@@ -199,7 +199,8 @@ export default function StromPageClient() {
   };
 
   const handleReset = () => {
-    setInputFrom(''); setInputTo('');
+    setInputFrom(`${todayStr()}T00:00`);
+    setInputTo(`${todayStr()}T23:45`);
     setAppliedFrom(''); setAppliedTo('');
     setError('');
   };
