@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import ReactECharts from 'echarts-for-react';
 import {
   Zap, Upload, TrendingUp, TrendingDown, Calendar,
-  ArrowLeft, RefreshCw, AlertTriangle, CheckCircle, Database,
+  ArrowLeft, RefreshCw, AlertTriangle, CheckCircle, Database, X,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,8 +40,8 @@ function getDateRange(months: number): { from: string; to: string } {
   const today = new Date();
   const to = today.toISOString().split('T')[0];
   if (months === 0) return { from: '2020-01-01', to };
-  if (months === -1) return { from: to, to };   // heute
-  if (months === -7) {                           // letzte 7 Tage
+  if (months === -1) return { from: to, to };
+  if (months === -7) {
     const d = new Date(today); d.setDate(d.getDate() - 6);
     return { from: d.toISOString().split('T')[0], to };
   }
@@ -51,7 +51,7 @@ function getDateRange(months: number): { from: string; to: string } {
 
 function buildOption(data: DataPoint[], group: GroupMode, isDark: boolean) {
   const labels = data.map(d => d.label);
-  const values = data.map(d => d.kwh);
+  const values = data.map(d => Number(d.kwh));
   if (!values.length) return {};
 
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
@@ -67,7 +67,6 @@ function buildOption(data: DataPoint[], group: GroupMode, isDark: boolean) {
     : '#3b82f6'
   );
 
-  const unit = group === '15min' || group === 'hour' ? 'kWh' : 'kWh';
   const labelFmt = (v: string) => {
     if (group === 'month') return v.slice(5) + '/' + v.slice(2, 4);
     if (group === 'year')  return v;
@@ -91,7 +90,7 @@ function buildOption(data: DataPoint[], group: GroupMode, isDark: boolean) {
         const diff = avg ? ((p.value - avg) / avg * 100).toFixed(1) : '0';
         const sign = parseFloat(diff) >= 0 ? '+' : '';
         const color = parseFloat(diff) >= 0 ? '#ef4444' : '#22c55e';
-        return `<b>${p.name}</b><br/>${p.value.toFixed(4)} ${unit}<br/>
+        return `<b>${p.name}</b><br/>${p.value.toFixed(4)} kWh<br/>
           <span style="color:${color}">${sign}${diff}% vs Ø (${avg.toFixed(4)})</span>`;
       },
     },
@@ -142,19 +141,25 @@ function buildOption(data: DataPoint[], group: GroupMode, isDark: boolean) {
   };
 }
 
+function formatDate(iso: string) {
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
 export default function StromPageClient() {
   const router = useRouter();
-  const [data,    setData]    = useState<DataPoint[]>([]);
-  const [stats,   setStats]   = useState<Stats | null>(null);
-  const [group,   setGroup]   = useState<GroupMode>('day');
-  const [preset,  setPreset]  = useState(12);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-  const [isDark,  setIsDark]  = useState(false);
+  const [data,         setData]         = useState<DataPoint[]>([]);
+  const [stats,        setStats]        = useState<Stats | null>(null);
+  const [group,        setGroup]        = useState<GroupMode>('day');
+  const [preset,       setPreset]       = useState(12);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState('');
+  const [isDark,       setIsDark]       = useState(false);
 
-  const [uploading,    setUploading]    = useState(false);
-  const [uploadResult, setUploadResult] = useState<{ inserted: number; skipped: number; total: number } | null>(null);
-  const [uploadError,  setUploadError]  = useState('');
+  const [uploading,      setUploading]      = useState(false);
+  const [uploadResult,   setUploadResult]   = useState<{ inserted: number; skipped: number; total: number } | null>(null);
+  const [uploadError,    setUploadError]    = useState('');
   const [uploadProgress, setUploadProgress] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -166,10 +171,9 @@ export default function StromPageClient() {
     return () => mq.removeEventListener('change', h);
   }, []);
 
-  const load = useCallback(async (months: number, g: GroupMode) => {
+  const load = useCallback(async (from: string, to: string, g: GroupMode) => {
     setLoading(true); setError('');
     try {
-      const { from, to } = getDateRange(months);
       const res = await fetch(`/api/strom?from=${from}&to=${to}&group=${g}`);
       if (res.status === 401) { router.push('/login'); return; }
       if (!res.ok) throw new Error();
@@ -180,16 +184,21 @@ export default function StromPageClient() {
     finally { setLoading(false); }
   }, [router]);
 
-  useEffect(() => { load(preset, group); }, [preset, group, load]);
+  useEffect(() => {
+    if (selectedDate) {
+      load(selectedDate, selectedDate, '15min');
+    } else {
+      const { from, to } = getDateRange(preset);
+      load(from, to, group);
+    }
+  }, [preset, group, selectedDate, load]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true); setUploadResult(null); setUploadError(''); setUploadProgress('');
-
     const sizeMB = (file.size / 1024 / 1024).toFixed(1);
     setUploadProgress(`Lese Datei (${sizeMB} MB)…`);
-
     try {
       const fd = new FormData();
       fd.append('file', file);
@@ -199,7 +208,12 @@ export default function StromPageClient() {
       if (!res.ok) throw new Error(json.error ?? 'Fehler');
       setUploadResult({ inserted: json.inserted, skipped: json.skipped, total: json.total });
       setUploadProgress('');
-      load(preset, group);
+      if (selectedDate) {
+        load(selectedDate, selectedDate, '15min');
+      } else {
+        const { from, to } = getDateRange(preset);
+        load(from, to, group);
+      }
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
       setUploadProgress('');
@@ -213,10 +227,24 @@ export default function StromPageClient() {
   const avg     = data.length ? total / data.length : 0;
   const maxVal  = data.length ? Math.max(...data.map(d => Number(d.kwh))) : 0;
   const minVal  = data.length ? Math.min(...data.map(d => Number(d.kwh))) : 0;
-  const maxItem = data.find(d => d.kwh === maxVal);
-  const minItem = data.find(d => d.kwh === minVal);
+  const maxItem = data.find(d => Number(d.kwh) === maxVal);
+  const minItem = data.find(d => Number(d.kwh) === minVal);
+
+  // Stundensummen für Tagesansicht (aus 15-min-Daten berechnet)
+  const hourlyTotals = selectedDate && data.length > 0
+    ? Array.from({ length: 24 }, (_, h) => {
+        const hStr = h.toString().padStart(2, '0');
+        const pts = data.filter(d => d.label.slice(11, 13) === hStr);
+        const sum = pts.reduce((s, d) => s + Number(d.kwh), 0);
+        return { hour: `${hStr}:00`, kwh: sum, count: pts.length };
+      }).filter(h => h.count > 0)
+    : [];
+
+  const dayMaxHour = hourlyTotals.length ? hourlyTotals.reduce((a, b) => a.kwh > b.kwh ? a : b) : null;
+  const hourMax    = hourlyTotals.length ? Math.max(...hourlyTotals.map(h => h.kwh)) : 0;
 
   const hasData = stats && parseInt(stats.anzahl) > 0;
+  const activeGroup = selectedDate ? '15min' : group;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
@@ -266,7 +294,7 @@ export default function StromPageClient() {
               {
                 label: 'Max 15min',
                 value: `${parseFloat(stats!.max_15min).toFixed(4)} kWh`,
-                sub: 'Einzelmessung',
+                sub: 'Einzelmessung (gesamt)',
                 icon: <TrendingUp className="w-4 h-4" />, color: 'text-red-500 dark:text-red-400',
               },
               {
@@ -288,6 +316,28 @@ export default function StromPageClient() {
           </div>
         )}
 
+        {/* Tagesansicht-Banner */}
+        {selectedDate && (
+          <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl px-5 py-3">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                  Tagesansicht: {formatDate(selectedDate)}
+                </p>
+                <p className="text-xs text-blue-500 dark:text-blue-400">
+                  15-Minuten-Auflösung · {data.length} Messpunkte
+                  {total > 0 && ` · ${total.toFixed(3)} kWh gesamt`}
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setSelectedDate('')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300 text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-all">
+              <X className="w-3.5 h-3.5" /> Zurück zur Übersicht
+            </button>
+          </div>
+        )}
+
         {/* Chart */}
         <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -302,30 +352,47 @@ export default function StromPageClient() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              {/* Auflösung */}
-              <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700/50 p-0.5 rounded-lg">
-                {GROUPS.map(g => (
-                  <button key={g.key} onClick={() => setGroup(g.key)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                      group === g.key
-                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
-                    {g.label}
-                  </button>
-                ))}
+              {/* Datepicker für Tagesansicht */}
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={e => setSelectedDate(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-              {/* Zeitraum */}
-              <div className="flex gap-0.5 flex-wrap">
-                {PRESETS.map(p => (
-                  <button key={p.label} onClick={() => setPreset(p.months)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      preset === p.months
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+
+              {/* Auflösung (nur wenn kein Tag gewählt) */}
+              {!selectedDate && (
+                <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700/50 p-0.5 rounded-lg">
+                  {GROUPS.map(g => (
+                    <button key={g.key} onClick={() => setGroup(g.key)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                        activeGroup === g.key
+                          ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Zeitraum-Presets (nur wenn kein Tag gewählt) */}
+              {!selectedDate && (
+                <div className="flex gap-0.5 flex-wrap">
+                  {PRESETS.map(p => (
+                    <button key={p.label} onClick={() => setPreset(p.months)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        preset === p.months
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -347,26 +414,82 @@ export default function StromPageClient() {
             </div>
           ) : data.length === 0 ? (
             <div className="h-80 flex items-center justify-center text-gray-400 text-sm">
-              Keine Daten für diesen Zeitraum
+              {selectedDate
+                ? `Keine Daten für ${formatDate(selectedDate)} vorhanden`
+                : 'Keine Daten für diesen Zeitraum'}
             </div>
           ) : (
             <ReactECharts
-              option={buildOption(data, group, isDark)}
+              option={buildOption(data, activeGroup, isDark)}
               style={{ height: 380 }}
               notMerge
             />
           )}
         </div>
 
-        {/* Zeitraum-Statistik + Top-5 */}
-        {data.length > 0 && !loading && (
+        {/* Tagesanalyse-Detail (nur bei gewähltem Datum) */}
+        {selectedDate && data.length > 0 && !loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Tages-Statistik */}
+            <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                Tagesstatistik — {formatDate(selectedDate)}
+              </h3>
+              <div className="space-y-2 text-sm">
+                {[
+                  { label: 'Tagesverbrauch', value: `${total.toFixed(3)} kWh`, color: 'text-blue-600 dark:text-blue-400' },
+                  { label: 'Messpunkte',     value: `${data.length} × 15 Min` },
+                  { label: 'Ø pro 15 Min',   value: `${avg.toFixed(4)} kWh` },
+                  { label: 'Stärkste Stunde',value: dayMaxHour ? `${dayMaxHour.hour} (${dayMaxHour.kwh.toFixed(3)} kWh)` : '–', color: 'text-orange-500' },
+                  { label: 'Peak 15min',     value: maxItem ? `${maxVal.toFixed(4)} kWh (${maxItem.label.slice(11)})` : '–', color: 'text-red-500' },
+                  { label: 'Minimum 15min',  value: minItem ? `${minVal.toFixed(4)} kWh (${minItem.label.slice(11)})` : '–', color: 'text-green-500' },
+                ].map(item => (
+                  <div key={item.label} className="flex justify-between items-start gap-2">
+                    <span className="text-gray-500 dark:text-gray-400 shrink-0">{item.label}</span>
+                    <span className={`font-medium text-right text-xs ${item.color ?? 'text-gray-800 dark:text-gray-200'}`}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stündliche Übersicht */}
+            <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Stündlicher Verbrauch</h3>
+              <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                {hourlyTotals.map(h => {
+                  const pct = hourMax > 0 ? (h.kwh / hourMax) * 100 : 0;
+                  const color = h.kwh > hourMax * 0.8 ? '#ef4444'
+                    : h.kwh > hourMax * 0.6 ? '#f97316'
+                    : h.kwh < hourMax * 0.3 ? '#22c55e'
+                    : '#3b82f6';
+                  return (
+                    <div key={h.hour} className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400 w-10 shrink-0 font-mono">{h.hour}</span>
+                      <div className="flex-1 h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-4 rounded-full transition-all duration-300"
+                          style={{ width: `${pct}%`, backgroundColor: color }} />
+                      </div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300 w-16 text-right shrink-0">
+                        {h.kwh.toFixed(3)} kWh
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Zeitraum-Statistik + Top-5 (bei normaler Ansicht) */}
+        {!selectedDate && data.length > 0 && !loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Zeitraum-Statistik</h3>
               <div className="space-y-2 text-sm">
                 {[
                   { label: 'Zeitraum',      value: `${data[0]?.label ?? '–'} – ${data.at(-1)?.label ?? '–'}` },
-                  { label: 'Datenpunkte',   value: `${data.length.toLocaleString('de-AT')} ${GROUPS.find(g => g.key === group)?.label ?? ''}` },
+                  { label: 'Datenpunkte',   value: `${data.length.toLocaleString('de-AT')} ${GROUPS.find(g => g.key === activeGroup)?.label ?? ''}` },
                   { label: 'Gesamt',        value: `${total.toLocaleString('de-AT', { minimumFractionDigits: 3 })} kWh` },
                   { label: 'Durchschnitt',  value: `${avg.toFixed(4)} kWh` },
                   { label: 'Maximum',       value: maxItem ? `${maxVal.toFixed(4)} kWh (${maxItem.label})` : '–', color: 'text-red-500' },
@@ -383,21 +506,28 @@ export default function StromPageClient() {
             <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Top 5 Höchstverbrauch</h3>
               <div className="space-y-2.5">
-                {[...data].sort((a, b) => b.kwh - a.kwh).slice(0, 5).map((d, i) => (
+                {[...data].sort((a, b) => Number(b.kwh) - Number(a.kwh)).slice(0, 5).map((d, i) => (
                   <div key={d.label} className="flex items-center gap-3">
                     <span className="text-xs font-bold text-gray-400 w-4 shrink-0">#{i + 1}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-600 dark:text-gray-400 truncate">{d.label}</span>
-                        <span className="font-bold text-red-500 ml-2 shrink-0">{d.kwh.toFixed(4)}</span>
+                        <button
+                          onClick={() => { if (activeGroup === 'day') setSelectedDate(d.label); }}
+                          className={`text-gray-600 dark:text-gray-400 truncate ${activeGroup === 'day' ? 'hover:text-blue-500 cursor-pointer' : ''}`}
+                          title={activeGroup === 'day' ? 'Tag details anzeigen' : undefined}
+                        >{d.label}</button>
+                        <span className="font-bold text-red-500 ml-2 shrink-0">{Number(d.kwh).toFixed(activeGroup === 'day' ? 3 : 4)}</span>
                       </div>
                       <div className="mt-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
                         <div className="h-1.5 bg-red-400 rounded-full transition-all"
-                          style={{ width: `${(d.kwh / maxVal) * 100}%` }} />
+                          style={{ width: `${(Number(d.kwh) / maxVal) * 100}%` }} />
                       </div>
                     </div>
                   </div>
                 ))}
+                {activeGroup === 'day' && (
+                  <p className="text-[10px] text-gray-400 pt-1">Auf einen Tag klicken → Tagesdetails</p>
+                )}
               </div>
             </div>
           </div>
