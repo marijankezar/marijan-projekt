@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
           SELECT to_char(zeitpunkt, 'YYYY-MM-DD HH24:MI') AS label,
                  kwh::float AS kwh, 1 AS cnt
           FROM stromverbrauch
-          WHERE zeitpunkt >= $1::date AND zeitpunkt < ($2::date + interval '1 day')
+          WHERE zeitpunkt >= $1::timestamp AND zeitpunkt <= $2::timestamp
           ORDER BY zeitpunkt
         `;
         break;
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
                  SUM(kwh)::numeric(8,3)::float AS kwh,
                  COUNT(*) AS cnt
           FROM stromverbrauch
-          WHERE zeitpunkt >= $1::date AND zeitpunkt < ($2::date + interval '1 day')
+          WHERE zeitpunkt >= $1::timestamp AND zeitpunkt <= $2::timestamp
           GROUP BY 1 ORDER BY 1
         `;
         break;
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
                  SUM(kwh)::numeric(10,3)::float AS kwh,
                  COUNT(*) AS cnt
           FROM stromverbrauch
-          WHERE zeitpunkt >= $1::date AND zeitpunkt < ($2::date + interval '1 day')
+          WHERE zeitpunkt >= $1::timestamp AND zeitpunkt <= $2::timestamp
           GROUP BY 1 ORDER BY 1
         `;
         break;
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
                  SUM(kwh)::numeric(10,3)::float AS kwh,
                  COUNT(*) AS cnt
           FROM stromverbrauch
-          WHERE zeitpunkt >= $1::date AND zeitpunkt < ($2::date + interval '1 day')
+          WHERE zeitpunkt >= $1::timestamp AND zeitpunkt <= $2::timestamp
           GROUP BY 1 ORDER BY 1
         `;
         break;
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
                  SUM(kwh)::numeric(8,3)::float AS kwh,
                  COUNT(*) AS cnt
           FROM stromverbrauch
-          WHERE zeitpunkt >= $1::date AND zeitpunkt < ($2::date + interval '1 day')
+          WHERE zeitpunkt >= $1::timestamp AND zeitpunkt <= $2::timestamp
           GROUP BY 1 ORDER BY 1
         `;
     }
