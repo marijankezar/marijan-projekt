@@ -209,10 +209,10 @@ export default function StromPageClient() {
     }
   };
 
-  const total   = data.reduce((s, d) => s + d.kwh, 0);
+  const total   = data.reduce((s, d) => s + Number(d.kwh), 0);
   const avg     = data.length ? total / data.length : 0;
-  const maxVal  = data.length ? Math.max(...data.map(d => d.kwh)) : 0;
-  const minVal  = data.length ? Math.min(...data.map(d => d.kwh)) : 0;
+  const maxVal  = data.length ? Math.max(...data.map(d => Number(d.kwh))) : 0;
+  const minVal  = data.length ? Math.min(...data.map(d => Number(d.kwh))) : 0;
   const maxItem = data.find(d => d.kwh === maxVal);
   const minItem = data.find(d => d.kwh === minVal);
 

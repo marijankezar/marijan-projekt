@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     return NextResponse.json({
-      data:  dataRes.rows.map(r => ({ label: r.label, kwh: r.kwh, cnt: parseInt(r.cnt) })),
+      data:  dataRes.rows.map(r => ({ label: r.label, kwh: parseFloat(r.kwh), cnt: parseInt(r.cnt) })),
       stats: { ...statsRes.rows[0], ...rangeRes.rows[0] },
     });
   } catch (err) {
