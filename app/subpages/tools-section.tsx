@@ -53,6 +53,37 @@ export default function ToolsSection() {
             </div>
           </div>
 
+          {/* Strom Card */}
+          <div className="group relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30 transition-all duration-300 p-6 flex flex-col gap-3">
+            <Link href="/strom" className="absolute inset-0 z-20 rounded-2xl" aria-label="Stromverbrauch öffnen" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-indigo-600/0 group-hover:from-blue-500/5 group-hover:to-indigo-600/5 transition-all duration-300 rounded-2xl" />
+            <div className="relative z-10 flex items-start justify-between">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+              </svg>
+            </div>
+            <div className="relative z-10">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Stromverbrauch
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                Täglicher Verbrauch aus STW Energieportal · Analyse & Trends
+              </p>
+            </div>
+            <div className="relative z-10 flex flex-wrap gap-1.5 mt-1">
+              {["kWh", "Tagesanalyse", "Monatsbericht", "ECharts"].map(tag => (
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 font-medium">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
           {/* Atomuhr Card */}
           <div className="group relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 p-6 flex flex-col gap-3">
             <Link href="/uhr" className="absolute inset-0 z-20 rounded-2xl" aria-label="Kežar Atomuhr öffnen" />
