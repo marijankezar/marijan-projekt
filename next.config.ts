@@ -30,7 +30,7 @@ const securityHeaders = [
   // Browser-Features einschränken
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    value: "camera=(), microphone=(), geolocation=(self), payment=(), usb=()",
   },
   // Content Security Policy:
   // - default-src 'self': nur eigene Ressourcen erlaubt
@@ -44,7 +44,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://img.youtube.com https://i.ytimg.com",
+      "img-src 'self' data: https://img.youtube.com https://i.ytimg.com https://*.tile.openstreetmap.org",
       "font-src 'self' data:",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
       "connect-src 'self' https://worldtime.formality.de",
